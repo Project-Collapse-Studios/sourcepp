@@ -6,7 +6,5 @@ add_pretty_parser(kvpp
         "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/KV1Binary.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/KV1Writer.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/kvpp.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/VMF.h"
         "${CMAKE_CURRENT_LIST_DIR}/DMX.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/VMF.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/KV1Binary.cpp")
