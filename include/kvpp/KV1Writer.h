@@ -231,6 +231,11 @@ public:
 	/// Remove a child element from the element with the given key. -1 means all children with the given key
 	void removeChild(std::string_view childKey, int n = -1) {
 		unsigned int count = 0;
+		if (this->children.size() == 1) {
+			if (sourcepp::string::iequals(this->children[0].getKey(), childKey)) this->children.erase(this->children.begin());
+			return;
+		}
+
 		for (auto element = this->children.begin(); element != this->children.end(); ++element) {
 			if (sourcepp::string::iequals(element->getKey(), childKey)) {
 				if (n < 0 || count == n) {
