@@ -32,4 +32,6 @@ Entity::Entity(kvpp::KV1ElementWritable<key_base> keyvalues_) {
     this->keyvalues = Keyvalues(keyvalues_);
 }
 
-Entity::~Entity() = default;
+Entity::~Entity() {
+    this->outputs.clear();
+}
