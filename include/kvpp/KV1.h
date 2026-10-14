@@ -235,6 +235,11 @@ public:
 		} catch (const std::overflow_error&) {}
 	}
 
+	KV1(const KV1ElementReadable<S>& kv1Data, bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
+		this->children = kv1Data.getChildren();
+		this->key = kv1Data.getKey();
+	}
+
 protected:
 	using KV1ElementReadable<S>::getKey;
 	using KV1ElementReadable<S>::getValue;

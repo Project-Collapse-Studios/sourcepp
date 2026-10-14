@@ -9,9 +9,22 @@
 namespace kvpp {
 
 template<typename S = std::string>
-requires std::convertible_to<S, std::string>
+requires std::convertible_to<S, std::string_view>
 class KV1ElementWritable {
 public:
+	/// Allow to convert KV1ElementReadable onto us.
+	KV1ElementWritable(const KV1ElementReadable<S>& other) {
+		if (other.getChildCount()) {
+			for (auto element : other.getChildren()) {
+				this->children.push_back(KV1ElementWritable<S>(element));
+			}
+		} else {
+			this->value = other.getValue();
+			this->key = other.getKey();
+			this->conditional = other.getConditional();
+		}
+	}
+
 	/// Get the key associated with the element
 	[[nodiscard]] std::string_view getKey() const {
 		return this->key;
@@ -365,6 +378,22 @@ public:
 		try {
 			KV1ElementWritable<S>::read(stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(this->useEscapeSequences));
 		} catch (const std::overflow_error&) {}
+	}
+
+	/// Constructor used to cast KV1ElementWritable into a KV1Writer
+	KV1Writer(const KV1ElementWritable<S>& kv1Data, bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
+		this->children = kv1Data.getChildren();
+		this->key = kv1Data.getKey();
+	}
+
+	//friend KV1<S>::KV1(KV1Writer<S>);
+
+	/// Construct from a read-only KV1<S>
+	KV1Writer(const KV1<S>& kv1obj) {
+		//this->useEscapeSequences = kv1obj.useEscapeSequences;
+		for (auto child : kv1obj.getChildren()) {
+			this->children.push_back(KV1ElementWritable<S>(child));
+		}
 	}
 
 	[[nodiscard]] std::string bake() const {
