@@ -2,13 +2,14 @@
 
 #include <format>
 
+#define USE_KV1WRITER
 #include "KV1.h"
 
 #include <sourcepp/FS.h>
 
 namespace kvpp {
 
-template<typename S = std::string>
+template<typename S> // Default argument defined in KV1.h
 requires std::convertible_to<S, std::string_view>
 class KV1ElementWritable {
 public:
@@ -360,7 +361,7 @@ protected:
 	std::vector<KV1ElementWritable> children;
 };
 
-template<typename S = std::string>
+template<typename S> // Default defined in KV1.h
 requires std::convertible_to<S, std::string_view>
 class KV1Writer : public KV1ElementWritable<S> {
 public:
@@ -386,13 +387,13 @@ public:
 		this->key = kv1Data.getKey();
 	}
 
-	//friend KV1<S>::KV1(KV1Writer<S>);
+	friend class KV1<S>; // Befriend the class, but only of the same type
 
 	/// Construct from a read-only KV1<S>
-	KV1Writer(const KV1<S>& kv1obj) {
-		//this->useEscapeSequences = kv1obj.useEscapeSequences;
-		for (auto child : kv1obj.getChildren()) {
-			this->children.push_back(KV1ElementWritable<S>(child));
+	KV1Writer(const KV1<S>& other) {
+		this->useEscapeSequences = other.useEscapeSequences;
+		for (auto element : other.getChildren()) {
+			this->children.push_back(KV1ElementWritable<S>(element));
 		}
 	}
 

@@ -11,6 +11,18 @@
 
 namespace kvpp {
 
+#ifdef USE_KV1WRITER // Defined in KV1Writer.h before importing us.
+	// Definitions from KV1Writer.h
+	template<typename S = std::string>
+	requires std::convertible_to<S, std::string_view>
+	class KV1Writer;
+
+	template<typename S = std::string>
+	requires std::convertible_to<S, std::string_view>
+	class KV1ElementWritable;
+	// END
+#endif
+
 template<typename V>
 concept KV1ValueType = std::convertible_to<V, std::string_view>
                     || std::same_as<V, bool>
@@ -22,6 +34,20 @@ template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
 class KV1ElementReadable {
 public:
+	/// Convert from KV1ElementWritable
+	KV1ElementReadable(const KV1ElementWritable<S>& other) {
+		if (other.getChildCount()) {
+			for (auto element : other.getChildren()) {
+				this->children.push_back(KV1ElementReadable<S>(element));
+			}
+		} else {
+			this->value = other.getValue();
+			this->key = other.getKey();
+			this->conditional = other.getConditional();
+		}
+	}
+
+
 	/// Get the key associated with the element
 	[[nodiscard]] std::string_view getKey() const {
 		return this->key;
@@ -239,6 +265,17 @@ public:
 		this->children = kv1Data.getChildren();
 		this->key = kv1Data.getKey();
 	}
+
+#ifdef USE_KV1WRITER
+	friend class KV1Writer<S>; // Befriend the class, but only of the same type
+
+	KV1(const KV1Writer<S>& other) {
+		this->useEscapeSequences = other.useEscapeSequences;
+		for (auto element : other.getChildren()) {
+			this->children.push_back(KV1ElementReadable<S>(element));
+		}
+	}
+#endif
 
 protected:
 	using KV1ElementReadable<S>::getKey;
