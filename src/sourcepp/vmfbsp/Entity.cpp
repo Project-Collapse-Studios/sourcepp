@@ -9,8 +9,6 @@ Entity::Entity(const std::string& classname_, const Vec3f& origin_) {
     this->keyvalues = Keyvalues("");
 }
 
-Entity::Entity(const Keyvalues& keyvalues_) : Entity::Entity(keyvalues_[0]) {};
-
 Entity::Entity(kvpp::KV1ElementWritable<key_base> keyvalues_) {
 
     if (!keyvalues_.getChildCount()) { // If this element has no children

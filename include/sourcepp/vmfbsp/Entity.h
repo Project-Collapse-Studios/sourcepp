@@ -6,22 +6,53 @@
 #include "Output.h"
 
 #ifdef Use_STRINGVIEW
-using key_base = std::string;
+using key_base = std::string_view;
 #else
 using key_base = std::string;
 #endif
 
+/*
+ * This class represents an Point Entity in the source engine.
+ * It stores the classname, origin and additional keyvalues.
+ * It's intended to be used in VMFs or BSPs, thus you cannot create this class directly. You can only create an std::unique_ptr to it, as it is enforced to only have one owner at a time.
+ * In case you want to modify it: Remove it from the map, perform your modifications and add it back in.
+ *
+ * In order to create an Entity, call Entity::Create()
+ * There are a couple of options:
+ * 1. Create from classname, origin
+ * 2. Create from Keyvalues. This class supports creating from KV1, KV1Writer, KV1ElementReadable, and KV1Writable. Internally every class of keyvalues gets converted to KV1ElementWritable. When passing KV1 or KV1Writer, the root is omitted.
+ */
 class Entity {
-    public:
+
+public:
         // Constructors and destructors
-        explicit Entity(const std::string&, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f));
-        explicit Entity(const kvpp::KV1Writer<key_base>&);
+        Entity() = delete;
 
-        Entity(kvpp::KV1ElementWritable<key_base> keyvalues_);
-        // TODO:
-        // Entity(kv_binary);
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const std::string& classname_, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f)) {
+                return std::unique_ptr<Entity>(new Entity(classname_, origin_));
+        }
+
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1Writer<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kv[0])); // In case of base classes that contain the root, omit the root
+        }
+
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kvpp::KV1Writer(kv)[0])); // The entity cannot be read only.
+        }
+
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1ElementWritable<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kv));
+        }
+
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1ElementReadable<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kvpp::KV1ElementWritable<key_base>(kv)));
+        }
+
+        [[nodiscard]] static std::unique_ptr<Entity> Create(const std::string_view& keyvalues) {
+            return std::unique_ptr<Entity>(new Entity(kvpp::KV1Writer<key_base>(keyvalues)[0]));
+        }
+
         ~Entity();
-
         // Getters
 
         [[nodiscard]] std::string GetClassname() const {
@@ -60,18 +91,39 @@ class Entity {
         }
 
         /// Add an output to this entity. This entity claims ownership of this output!
-        void AddOutput(std::unique_ptr<Output> pOut) {
-            this->outputs.push_back(std::move(pOut));
+        void AddOutput(const Output pOut) { // We want a copy, to claim ownership of the output.
+            this->outputs.push_back(pOut);
         }
 
         /// Removes and returns the output of out_idx from the output list.
-        std::unique_ptr<Output> RemoveOutput(unsigned int out_idx) {
-            return std::move(*this->outputs.erase(this->outputs.begin() + out_idx));
+        Output RemoveOutput(const unsigned int out_idx) {
+            return *this->outputs.erase(this->outputs.begin() + out_idx);
         }
+
+
+        /// Allow for entity copying.
+        std::unique_ptr<Entity> copy() const {
+            return std::unique_ptr<Entity>(new Entity(*this)); // Std::make_unique requires access to the protected copy constructor
+            }
 
     protected:
         kvpp::KV1Writer<key_base> keyvalues;
         std::string classname;
         sourcepp::math::Vec3f origin;
-        std::vector<std::unique_ptr<Output>> outputs;
+        std::vector<Output> outputs;
+
+        // Constructors:
+        explicit Entity(const std::string&, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f));
+        explicit Entity(kvpp::KV1ElementWritable<key_base> keyvalues_);
+        // TODO:
+        // Entity(kv_binary);
+        explicit Entity(const Entity& other) {
+            // Copy constructor. We disallow traditional copies from outside.
+            this->keyvalues = other.keyvalues;
+            this->classname = other.classname;
+            this->origin = other.origin;
+            for (auto pOutput = other.outputs.begin(); pOutput != other.outputs.end(); pOutput++) {
+                this->outputs.emplace_back(*pOutput); // Copy the output
+            }
+        }
 };
