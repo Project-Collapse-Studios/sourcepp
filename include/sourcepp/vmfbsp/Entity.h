@@ -90,7 +90,7 @@ public:
             return this->keyvalues[key].getValue<S>();
         }
 
-        /// Add an output to this entity. This entity claims ownership of this output!
+        /// Add an output to this entity.
         void AddOutput(const Output pOut) { // We want a copy, to claim ownership of the output.
             this->outputs.push_back(pOut);
         }
@@ -101,8 +101,8 @@ public:
         }
 
 
-        /// Allow for entity copying.
-        std::unique_ptr<Entity> copy() const {
+        /// Copy the entity. Returns a new object based on this one.
+        [[nodiscard]] std::unique_ptr<Entity> copy() const {
             return std::unique_ptr<Entity>(new Entity(*this)); // Std::make_unique requires access to the protected copy constructor
             }
 
@@ -122,7 +122,7 @@ public:
             this->keyvalues = other.keyvalues;
             this->classname = other.classname;
             this->origin = other.origin;
-            for (auto pOutput = other.outputs.begin(); pOutput != other.outputs.end(); pOutput++) {
+            for (auto pOutput = other.outputs.begin(); pOutput != other.outputs.end(); ++pOutput) {
                 this->outputs.emplace_back(*pOutput); // Copy the output
             }
         }
