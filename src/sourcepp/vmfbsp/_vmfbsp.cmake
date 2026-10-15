@@ -1,5 +1,6 @@
 list(APPEND ${PROJECT_NAME}_vmfbsp_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/sourcepp/vmfbsp/Entity.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/sourcepp/vmfbsp/Output.h"
 )
 
 add_library(${PROJECT_NAME}_vmfbsp STATIC
