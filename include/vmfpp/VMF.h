@@ -1,15 +1,9 @@
 #pragma once
 
-#include <string_view>
-#include <vector>
-#include <sourcepp/Math.h>
-#include <map>
-#include "../kvpp/KV1.h"
-
-namespace kvpp {
+namespace vmfpp {
 
     class VMF {
-        std::string *backing;
+        std::string *backing{};
         bool opened;
     public:
 
@@ -21,13 +15,13 @@ namespace kvpp {
 
         public:
             StringReference() = default;
-            StringReference(size_t start, size_t end, std::string *ref) : start(start), end(end), reference(ref), valid(true) {}
+            StringReference(const size_t start, const size_t end, std::string *ref) : valid(true), start(start), end(end), reference(ref) {}
 
             [[nodiscard]] std::string_view getStringView() const;
 
             [[nodiscard]] std::string getString() const;
 
-            bool operator==(std::string_view str) const
+            bool operator==(const std::string_view str) const
             {
                 return str == this->getStringView();
             }
@@ -47,7 +41,7 @@ namespace kvpp {
             int formatVersion;
             bool prefab;
 
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct VisGroup {
@@ -55,7 +49,7 @@ namespace kvpp {
             int visgroupID;
             sourcepp::math::Vec3i8 color;
             std::vector<VisGroup> branches;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct ViewSettings {
@@ -64,7 +58,7 @@ namespace kvpp {
             bool showLogicalGrid;
             int gridSpacing;
             bool show3DGrid;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<>& kv);
         };
 
         struct UVAxis {
@@ -73,14 +67,14 @@ namespace kvpp {
             float z;
             float degrees;
             float scaling;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<>& kv);
         };
 
         struct Plane {
             sourcepp::math::Vec3f bottomLeft;
             sourcepp::math::Vec3f TopLeft;
             sourcepp::math::Vec3f TopRight;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<>& kv);
         };
 
         struct VertexColumn {
@@ -89,7 +83,7 @@ namespace kvpp {
             sourcepp::math::Vec3f XYZ2;
             sourcepp::math::Vec3f XYZ3;
             sourcepp::math::Vec3f XYZ4;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<>& kv);
         };
 
         struct TagColumn {
@@ -98,7 +92,7 @@ namespace kvpp {
             sourcepp::math::Vec2f XY2;
             sourcepp::math::Vec2f XY3;
             sourcepp::math::Vec2f XY4;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<>& kv);
         };
 
         struct DecimalColumn {
@@ -107,7 +101,7 @@ namespace kvpp {
             float d2;
             float d3;
             float d4;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing);
         };
 
         struct DisplacementInfo {
@@ -127,7 +121,7 @@ namespace kvpp {
             std::vector<DecimalColumn> alphas;
             std::vector<TagColumn> triangleTags;
             std::map<int, std::vector<int>> allowedTags;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct Side {
@@ -142,7 +136,7 @@ namespace kvpp {
             int contents;
             int flags;
             DisplacementInfo displacementInfo;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct Editor {
@@ -153,20 +147,20 @@ namespace kvpp {
             bool visgroupAutoShown;
             StringReference comments;
             sourcepp::math::Vec2f logicalPos;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct Solid {
             int id;
             std::vector<Side> sides;
             Editor editor;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            void parse(const kvpp::KV1ElementReadable<>& kv, std::string* backing_);
         };
 
         struct Group {
             int id;
             Editor editor;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            void parse(const kvpp::KV1ElementReadable<>& kv, std::string* backing_);
         };
 
         struct BaseEntity {
@@ -181,7 +175,7 @@ namespace kvpp {
         struct World : public BaseEntity {
             StringReference skyName;
             int mapVersion;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct Connection {
@@ -191,7 +185,7 @@ namespace kvpp {
             StringReference parameter;
             float delay;
             int fireCount;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_);
         };
 
         struct OverlayData {
@@ -209,7 +203,7 @@ namespace kvpp {
             sourcepp::math::Vec3f uv1;
             sourcepp::math::Vec3f uv2;
             sourcepp::math::Vec3f uv3;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing);
         };
 
         struct Entity : public BaseEntity {
@@ -217,14 +211,14 @@ namespace kvpp {
             sourcepp::math::Vec3f origin;
             std::vector<Connection> connections;
             std::vector<OverlayData> overlaytransition;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing);
         };
 
         struct Camera
         {
             sourcepp::math::Vec3f position;
             sourcepp::math::Vec3f look;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing);
         };
 
         struct Cordon
@@ -233,13 +227,13 @@ namespace kvpp {
             sourcepp::math::Vec3f maxs;
             bool active;
             StringReference name;
-            bool parse(const kvpp::KV1ElementReadable<std::basic_string_view<char>> &kv, std::string *backing);
+            bool parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing);
         };
 
 
         VersionInfo versionInfo{};
         World world{};
-        ViewSettings viewSettings;
+        ViewSettings viewSettings{};
 
         std::vector<Entity> entities{};
         std::vector<VisGroup> visgroups{};
@@ -249,9 +243,9 @@ namespace kvpp {
 
         VMF();
         explicit VMF(const std::filesystem::path& path);
-        explicit VMF(const kvpp::KV1<std::string_view>& kv);
+        explicit VMF(const kvpp::KV1<>& kv);
 
-        bool load(const kvpp::KV1<std::string_view>& kv);
+        bool load(const kvpp::KV1<>& kv);
 
     private:
         static StringReference newStringReference(std::string_view str, std::string* backing);

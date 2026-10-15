@@ -34,8 +34,10 @@ template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
 class KV1ElementReadable {
 public:
+
+#ifdef USE_KV1WRITER
 	/// Convert from KV1ElementWritable
-	KV1ElementReadable(const KV1ElementWritable<S>& other) {
+	explicit KV1ElementReadable(const KV1ElementWritable<S>& other) {
 		if (other.getChildCount()) {
 			for (auto element : other.getChildren()) {
 				this->children.push_back(KV1ElementReadable<S>(element));
@@ -46,7 +48,7 @@ public:
 			this->conditional = other.getConditional();
 		}
 	}
-
+#endif
 
 	/// Get the key associated with the element
 	[[nodiscard]] std::string_view getKey() const {
@@ -87,7 +89,7 @@ public:
 	}
 
 	/// Check if the element has one or more children with the given key
-	[[nodiscard]] bool hasChild(std::string_view childKey) const {
+	[[nodiscard]] bool hasChild(const std::string_view childKey) const {
 		return !this->operator[](childKey).isInvalid();
 	}
 
@@ -97,7 +99,7 @@ public:
 	}
 
 	/// Get the number of child elements with the given key
-	[[nodiscard]] uint64_t getChildCount(std::string_view childKey) const {
+	[[nodiscard]] uint64_t getChildCount(const std::string_view childKey) const {
 		uint64_t count = 0;
 		for (const auto& element : this->children) {
 			if (sourcepp::string::iequals(element.key, childKey)) {
@@ -146,12 +148,12 @@ public:
 	}
 
 	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator[](std::string_view childKey) const {
+	[[nodiscard]] const KV1ElementReadable& operator[](const std::string_view childKey) const {
 		return this->operator()(childKey);
 	}
 
 	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator()(std::string_view childKey) const {
+	[[nodiscard]] const KV1ElementReadable& operator()(const std::string_view childKey) const {
 		for (const auto& element : this->children) {
 			if (sourcepp::string::iequals(element.getKey(), childKey)) {
 				return element;
@@ -161,7 +163,7 @@ public:
 	}
 
 	/// Get the nth child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator()(std::string_view childKey, unsigned int n) const {
+	[[nodiscard]] const KV1ElementReadable& operator()(const std::string_view childKey, const unsigned int n) const {
 		unsigned int count = 0;
 		for (const auto& element : this->children) {
 			if (sourcepp::string::iequals(element.getKey(), childKey)) {
@@ -241,7 +243,7 @@ template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
 class KV1 : public KV1ElementReadable<S> {
 public:
-	explicit KV1(std::string_view kv1Data, bool useEscapeSequences_ = false)
+	explicit KV1(std::string_view kv1Data, const bool useEscapeSequences_ = false)
 			: KV1ElementReadable<S>()
 			, useEscapeSequences(useEscapeSequences_) {
 		// Skip the UTF-8 BOM
@@ -261,7 +263,7 @@ public:
 		} catch (const std::overflow_error&) {}
 	}
 
-	KV1(const KV1ElementReadable<S>& kv1Data, bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
+	explicit KV1(const KV1ElementReadable<S>& kv1Data, const bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
 		this->children = kv1Data.getChildren();
 		this->key = kv1Data.getKey();
 	}
