@@ -394,8 +394,8 @@ vmfpp::VMF::VMF(const std::filesystem::path& path)
     auto file = sourcepp::fs::readFileText(path);
     file.insert(0, "map {");
     file.append("}");
-    //const auto keyv = kvpp::KV1(file);
-    //this->opened = this->load(keyv);
+    const auto keyv = kvpp::KV1(file);
+    this->opened = this->load(keyv);
 }
 
 vmfpp::VMF::VMF(const kvpp::KV1<>& kv)
