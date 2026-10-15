@@ -8,13 +8,13 @@
 #include "vmfpp/VMF.h"
 
 
-std::string_view vmfpp::VMF::StringReference::getStringView() const {
+std::string_view vmfpp::StringReference::getStringView() const {
     if (!valid)
         return "";
     return {this->reference->data() + this->start, this->reference->data() + this->end};
 }
 
-std::string vmfpp::VMF::StringReference::getString() const {
+std::string vmfpp::StringReference::getString() const {
     if (!valid)
         return "";
     return std::string(this->getStringView());
@@ -23,7 +23,7 @@ std::string vmfpp::VMF::StringReference::getString() const {
 bool vmfpp::VMF::VersionInfo::parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_)
 {
     if (kv.hasChild("editorextension"))
-        this->editorExtension = newStringReference(kv["editorextension"].getValue(), backing_);
+        this->editorExtension = vmfpp::StringReference::newStringReference(kv["editorextension"].getValue(), backing_);
     this->editorVersion = kv["editorversion"].getValue<int>();
     this->editorBuild = kv["editorbuild"].getValue<int>();
     this->mapVersion = kv["mapversion"].getValue<int>();
@@ -33,7 +33,7 @@ bool vmfpp::VMF::VersionInfo::parse(const kvpp::KV1ElementReadable<> &kv, std::s
 }
 
 bool vmfpp::VMF::VisGroup::parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_) {
-    this->name = newStringReference(kv["name"].getValue(), backing_);
+    this->name = vmfpp::StringReference::newStringReference(kv["name"].getValue(), backing_);
     this->visgroupID = kv["visgroupid"].getValue<int>();
     this->color = parseColor(kv["color"].getValue());
     for (int i = 0; i < kv.getChildCount("visgroup"); i++)
@@ -179,7 +179,7 @@ bool vmfpp::VMF::Side::parse(const kvpp::KV1ElementReadable<> &kv, std::string *
 
     this->id = kv("id").getValue<int>();
     this->plane.parse(kv("plane"));
-    this->material = newStringReference(kv("material").getValue(),backing_);
+    this->material = vmfpp::StringReference::newStringReference(kv("material").getValue(),backing_);
     this->uAXis.parse(kv("uaxis"));
     this->vAXis.parse(kv("vaxis"));
     this->rotation = kv("rotation").getValue<float>();
@@ -205,7 +205,7 @@ bool vmfpp::VMF::Editor::parse(const kvpp::KV1ElementReadable<> &kv, std::string
     this->visgroupAutoShown = kv("visgroupautoshown").getValue<bool>();
 
     if (kv.hasChild("comments"))
-        this->comments = newStringReference(kv("comments").getValue(), backing_);
+        this->comments = vmfpp::StringReference::newStringReference(kv("comments").getValue(), backing_);
 
     if (kv.hasChild("logicalpos"))
     {
@@ -236,14 +236,14 @@ void vmfpp::VMF::Group::parse(const kvpp::KV1ElementReadable<>& kv, std::string*
 bool vmfpp::VMF::World::parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_) {
     this->id = kv("id").getValue<int>();
     this->mapVersion = kv("mapversion").getValue<int>(); //mapversion is marked as sz (string) on the wiki, this is probably a mistake.
-    this->className = newStringReference(kv("classname").getValue(), backing_);
-    this->skyName = newStringReference(kv("skyname").getValue(), backing_);
+    this->className = vmfpp::StringReference::newStringReference(kv("classname").getValue(), backing_);
+    this->skyName = vmfpp::StringReference::newStringReference(kv("skyname").getValue(), backing_);
 
     for (int i = 0; i < kv.getChildCount("solid"); i++)
     {
         if (kv("solid").getChildCount() < 1) {
 
-            this->keyvalues["solid"] = newStringReference(kv("solid").getValue(), backing_);
+            this->keyvalues["solid"] = vmfpp::StringReference::newStringReference(kv("solid").getValue(), backing_);
             continue;
         }
 
@@ -265,7 +265,7 @@ bool vmfpp::VMF::World::parse(const kvpp::KV1ElementReadable<> &kv, std::string 
         if (std::ranges::find(nonKV,keyvalue.getKey()) != nonKV.end())
             continue;
 
-        this->keyvalues[std::string(keyvalue.getKey())] = newStringReference(keyvalue.getValue(),backing_);
+        this->keyvalues[std::string(keyvalue.getKey())] = vmfpp::StringReference::newStringReference(keyvalue.getValue(),backing_);
     }
 
     return true;
@@ -273,7 +273,7 @@ bool vmfpp::VMF::World::parse(const kvpp::KV1ElementReadable<> &kv, std::string 
 
 bool vmfpp::VMF::Connection::parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing_) {
 
-    this->output = newStringReference(kv.getKey(),backing_);
+    this->output = vmfpp::StringReference::newStringReference(kv.getKey(),backing_);
 
     auto sp = kv.getValue();
 
@@ -286,11 +286,11 @@ bool vmfpp::VMF::Connection::parse(const kvpp::KV1ElementReadable<> &kv, std::st
 
 
     if (!splitCon[0].empty())
-         this->entity = newStringReference(splitCon[0],backing_);
+         this->entity = vmfpp::StringReference::newStringReference(splitCon[0],backing_);
     if (!splitCon[1].empty())
-         this->input = newStringReference(splitCon[1],backing_);
+         this->input = vmfpp::StringReference::newStringReference(splitCon[1],backing_);
     if (!splitCon[2].empty())
-         this->parameter = newStringReference(splitCon[2],backing_);
+         this->parameter = vmfpp::StringReference::newStringReference(splitCon[2],backing_);
     if (!splitCon[3].empty())
         std::from_chars(splitCon[3].data(), splitCon[3].data() + splitCon[3].size(), this->delay);
     if (!splitCon[4].empty())
@@ -306,7 +306,7 @@ bool vmfpp::VMF::OverlayData::parse(const kvpp::KV1ElementReadable<> &kv, std::s
 
 bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string *backing) {
     this->id = kv("id").getValue<int>();
-    this->className = newStringReference(kv("classname").getValue(), backing);
+    this->className = vmfpp::StringReference::newStringReference(kv("classname").getValue(), backing);
     this->spawnflags = kv("classname").getValue<int>();
 
     if (kv.hasChild("origin"))
@@ -322,7 +322,7 @@ bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string
     {
         if (kv("solid").getChildCount() < 1) {
 
-            this->keyvalues["solid"] = newStringReference(kv("solid").getValue(), backing);
+            this->keyvalues["solid"] = vmfpp::StringReference::newStringReference(kv("solid").getValue(), backing);
             break;
         }
 
@@ -334,7 +334,7 @@ bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string
     {
         if (kv("group").getChildCount() < 1) {
 
-            this->keyvalues["group"] = newStringReference(kv("group").getValue(), backing);
+            this->keyvalues["group"] = vmfpp::StringReference::newStringReference(kv("group").getValue(), backing);
             continue;
         }
 
@@ -346,7 +346,7 @@ bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string
     {
 
         if (kv("hidden").getChildCount() < 1) {
-            this->keyvalues["hidden"] = newStringReference(kv("hidden").getValue(), backing);
+            this->keyvalues["hidden"] = vmfpp::StringReference::newStringReference(kv("hidden").getValue(), backing);
             continue;
         }
 
@@ -358,7 +358,7 @@ bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string
     for (int i = 0; i < kv.getChildCount("connections"); i++)
     {
         if (kv("connections").getChildCount() < 1) {
-            this->keyvalues["connections"] = newStringReference(kv("connections").getValue(), backing);
+            this->keyvalues["connections"] = vmfpp::StringReference::newStringReference(kv("connections").getValue(), backing);
             continue;
         }
 
@@ -373,7 +373,7 @@ bool vmfpp::VMF::Entity::parse(const kvpp::KV1ElementReadable<> &kv, std::string
         if(std::ranges::find(nonKV,keyvalue.getKey()) != nonKV.end())
             continue;
 
-        this->keyvalues[std::string(keyvalue.getKey())] = newStringReference(keyvalue.getValue(),backing);
+        this->keyvalues[std::string(keyvalue.getKey())] = vmfpp::StringReference::newStringReference(keyvalue.getValue(),backing);
     }
 
     return true;
@@ -446,19 +446,6 @@ bool vmfpp::VMF::load(const kvpp::KV1<> &kv) {
 
     }
     return true;
-}
-
-vmfpp::VMF::StringReference vmfpp::VMF::newStringReference(const std::string_view str, std::string* backing)
-{
-    if (const auto substr = backing->find(str); substr != std::string::npos)
-    {
-        return {substr, substr + str.length(),backing};
-    }
-
-    size_t start = backing->length();
-    backing->append(str);
-    size_t end = backing->length();
-    return {start,end,backing};
 }
 
 sourcepp::math::Vec3i8 vmfpp::VMF::parseColor(const std::string_view str) {

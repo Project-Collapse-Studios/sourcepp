@@ -1,37 +1,86 @@
 #pragma once
 
+#include "kvpp/kvpp.h"
+
 namespace vmfpp {
+
+	class StringReference {
+        bool valid = false;
+        size_t start = 0;
+        size_t end = 0;
+        std::string *reference = nullptr;
+
+    public:
+        StringReference() : valid(false) {};
+        StringReference(size_t start, size_t end, std::string *ref) : start(start), end(end), reference(ref), valid(true) {}
+
+        [[nodiscard]] std::string_view getStringView() const;
+
+        [[nodiscard]] std::string getString() const;
+
+        bool operator==(std::string_view str) const
+        {
+            if(!this->valid)
+                return false;
+            return str == this->getStringView();
+        }
+
+        bool operator==(StringReference ref)
+        {
+            if(!this->valid || !ref.valid)
+                return false;
+            return ref.end == this->end && ref.start == this->start && ref.reference == this->reference;
+        }
+
+        std::string_view operator()() const
+        {
+            if(!this->valid)
+                return {};
+            return this->getStringView();
+        }
+
+        std::string_view operator()(size_t s) const
+        {
+            if(!this->valid)
+                return {};
+            return this->getStringView().substr(s);
+        }
+
+        std::string_view operator()(size_t s, size_t n) const
+        {
+            if(!this->valid)
+                return {};
+            return this->getStringView().substr(s, n);
+        }
+
+        char operator[](size_t p) const
+        {
+            if(!this->valid)
+                return {};
+            return this->reference->at(p);
+        }
+
+        static StringReference newStringReference(std::string_view str, std::string* backing)
+        {
+
+            auto substr = backing->find(str);
+            if(substr != std::string::npos)
+            {
+                return {substr, substr + str.length(),backing};
+            }
+
+            size_t start = backing->length();
+            backing->append(str);
+            size_t end = backing->length();
+            return {start,end,backing};
+        }
+
+    };
 
     class VMF {
         std::string *backing{};
         bool opened;
     public:
-
-        class StringReference {
-            bool valid = false;
-            size_t start = 0;
-            size_t end = 0;
-            std::string *reference = nullptr;
-
-        public:
-            StringReference() = default;
-            StringReference(const size_t start, const size_t end, std::string *ref) : valid(true), start(start), end(end), reference(ref) {}
-
-            [[nodiscard]] std::string_view getStringView() const;
-
-            [[nodiscard]] std::string getString() const;
-
-            bool operator==(const std::string_view str) const
-            {
-                return str == this->getStringView();
-            }
-
-            std::string_view operator()() const
-            {
-                return this->getStringView();
-            }
-
-        };
 
         struct VersionInfo {
             StringReference editorExtension;
@@ -248,7 +297,6 @@ namespace vmfpp {
         bool load(const kvpp::KV1<>& kv);
 
     private:
-        static StringReference newStringReference(std::string_view str, std::string* backing);
         static sourcepp::math::Vec3i8 parseColor(std::string_view str);
         static sourcepp::math::Vec3f parsePlane(std::string_view str);
     };
