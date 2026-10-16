@@ -3,31 +3,52 @@
 using namespace sourcepp::math;
 using Keyvalues = kvpp::KV1Writer<key_base>;
 
-Entity::Entity(const std::string& classname_, const Vec3f& origin_) {
+Entity::Entity(const std::string& classname_, const Vec3f& origin_, const EulerAngles& angles_) {
     this->classname = classname_;
     this->origin = origin_;
+    this->angles = angles_;
     this->keyvalues = Keyvalues("");
+    this->spawnflags = 0;
 }
 
-Entity::Entity(kvpp::KV1ElementWritable<key_base> keyvalues_) {
+Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
+    keyvalues(keyvalues_) { // Cast KV1ElementWritable onto KV1Writer
 
-    if (!keyvalues_.getChildCount()) { // If this element has no children
-        throw std::invalid_argument("Key values must have at least one child");
-    }
-
-    for(const auto& value : keyvalues_) {
+    // Check if our values don't have children of chlidren
+    for (const auto &value: this->keyvalues) {
         if (value.getChildCount()) {
             throw std::invalid_argument("Key values must be flat! (Have no children)");
         }
     }
 
-    if (!keyvalues_.hasChild("classname")) {
-        throw std::invalid_argument("Creating entity by keyvalue requires keyvalues to have at least classname specified!");
+    if (!this->keyvalues.hasChild("classname")) {
+        throw std::invalid_argument("Cannot locate classname definition in the keyvalue structure!");
     }
 
-    this->classname = keyvalues_["classname"].getValue();
-    keyvalues_.removeChild("classname");
-    this->keyvalues = Keyvalues(keyvalues_);
+    this->classname = this->keyvalues("classname").getValue();
+    this->keyvalues.removeChild("classname");
+
+    if (this->keyvalues.hasChild("spawnflags")) {
+        this->spawnflags = this->keyvalues("spawnflags").getValue<int>(); // Cast onto unsigned.
+        this->keyvalues.removeChild("spawnflags");
+    } else {
+        this->spawnflags = 0;
+    }
+
+    // TODO: Add angle and origin reading from KV
+    if (this->keyvalues.hasChild("angles")) {
+        this->angles = EulerAngles(0.f, 0.f, 0.f);
+        this->keyvalues.removeChild("angles");
+    } else {
+        this->angles = EulerAngles(0.f, 0.f, 0.f);
+    }
+
+    if (this->keyvalues.hasChild("origin")) {
+        this->origin = Vec3f(0.f, 0.f, 0.f);
+        this->keyvalues.removeChild("origin");
+    } else {
+        this->origin = Vec3f(0.f, 0.f, 0.f);
+    }
 }
 
 Entity::~Entity() {

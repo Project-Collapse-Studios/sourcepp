@@ -10,7 +10,7 @@ using key_base = std::string_view;
 #else
 using key_base = std::string;
 #endif
-
+#include <iostream>
 /*
  * This class represents an Point Entity in the source engine.
  * It stores the classname, origin and additional keyvalues.
@@ -28,27 +28,27 @@ public:
         // Constructors and destructors
         Entity() = delete;
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const std::string& classname_, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f)) {
-                return std::unique_ptr<Entity>(new Entity(classname_, origin_));
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByComponents(const std::string& classname_, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f), const sourcepp::math::EulerAngles& angles_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f)) {
+                return std::unique_ptr<Entity>(new Entity(classname_, origin_, angles_));
         }
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1Writer<key_base>& kv) {
-            return std::unique_ptr<Entity>(new Entity(kv[0])); // In case of base classes that contain the root, omit the root
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const kvpp::KV1Writer<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kv)); // In case of base classes that contain the root, omit the root. Splicing is okay in this case.
         }
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1<key_base>& kv) {
-            return std::unique_ptr<Entity>(new Entity(kvpp::KV1Writer(kv)[0])); // The entity cannot be read only.
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const kvpp::KV1<key_base>& kv) {
+            return std::unique_ptr<Entity>(new Entity(kvpp::KV1Writer(kv))); // The entity cannot be read only.
         }
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1ElementWritable<key_base>& kv) {
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const kvpp::KV1ElementWritable<key_base>& kv) {
             return std::unique_ptr<Entity>(new Entity(kv));
         }
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const kvpp::KV1ElementReadable<key_base>& kv) {
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const kvpp::KV1ElementReadable<key_base>& kv) {
             return std::unique_ptr<Entity>(new Entity(kvpp::KV1ElementWritable<key_base>(kv)));
         }
 
-        [[nodiscard]] static std::unique_ptr<Entity> Create(const std::string_view& keyvalues) {
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const std::string_view& keyvalues) {
             return std::unique_ptr<Entity>(new Entity(kvpp::KV1Writer<key_base>(keyvalues)[0]));
         }
 
@@ -90,6 +90,26 @@ public:
             return this->keyvalues[key].getValue<S>();
         }
 
+        /// Return if the a specific spawnflag (or a combination of flags) is set
+        [[nodiscard]] bool GetSpawnflag(const unsigned int flag) const {
+            return (this->spawnflags & flag) == flag;
+        }
+
+        /// Set a spawnflag (or a combinations of such)
+        void SetSpawnflag(const unsigned int flags) {
+            this->spawnflags |= flags;
+        }
+
+        /// Overrides the spawnflags completely and sets them to the passed value.
+        void OverrideSpawnflag(const unsigned int spawnflags_) {
+            this->spawnflags = spawnflags_;
+        }
+
+        /// Unset a spawnflag (or a combinations of such)
+        void UnSetSpawnflag(const unsigned int flags) {
+            this->spawnflags ^= this->spawnflags & flags; // This will give us a "mask" so that when a flag is already unset it doesn't get set.
+        }
+
         /// Add an output to this entity.
         void AddOutput(const Output pOut) { // We want a copy, to claim ownership of the output.
             this->outputs.push_back(pOut);
@@ -107,14 +127,16 @@ public:
             }
 
     protected:
-        kvpp::KV1Writer<key_base> keyvalues;
+        kvpp::KV1Writer<> keyvalues;
         std::string classname;
         sourcepp::math::Vec3f origin;
+        sourcepp::math::EulerAngles angles;
         std::vector<Output> outputs;
+        unsigned int spawnflags;
 
         // Constructors:
-        explicit Entity(const std::string&, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f));
-        explicit Entity(kvpp::KV1ElementWritable<key_base> keyvalues_);
+        explicit Entity(const std::string&, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f), const sourcepp::math::EulerAngles& angles_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f));
+        explicit Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_);
         // TODO:
         // Entity(kv_binary);
         explicit Entity(const Entity& other) {
