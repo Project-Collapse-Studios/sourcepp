@@ -244,23 +244,16 @@ public:
 
 	/// Remove a child element from the element with the given key. -1 means all children with the given key
 	void removeChild(std::string_view childKey, int n = -1) {
+		if (n == 0) { return; }
 		unsigned int count = 0;
-		if (this->children.size() == 1) {
-			if (sourcepp::string::iequals(this->children[0].getKey(), childKey)) this->children.erase(this->children.begin());
-			return;
-		}
 
-		for (auto element = this->children.begin(); element != this->children.end(); ++element) {
-			if (sourcepp::string::iequals(element->getKey(), childKey)) {
-				if (n < 0 || count == n) {
-					element = this->children.erase(element);
-					if (count == n) {
-						break;
-					}
-				}
-				++count;
-			}
-		}
+		std::erase_if(this->children,
+			[&childKey, &count, n](const KV1ElementWritable& element) mutable noexcept -> bool {
+				if (count > n && n != -1) { return false; }
+				bool result = sourcepp::string::iequals(element.getKey(), childKey);
+				if (result) { ++count; }
+				return result;
+			});
 	}
 
 	/// Check if the given element is invalid
