@@ -25,26 +25,25 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
         throw std::invalid_argument("Cannot locate classname definition in the keyvalue structure!");
     }
 
-    this->classname = this->keyvalues("classname").getValue();
+    this->classname = this->keyvalues["classname"].getValue();
     this->keyvalues.removeChild("classname");
 
     if (this->keyvalues.hasChild("spawnflags")) {
-        this->spawnflags = this->keyvalues("spawnflags").getValue<int>(); // Cast onto unsigned.
+        this->spawnflags = this->keyvalues["spawnflags"].getValue<int>(); // Cast onto unsigned.
         this->keyvalues.removeChild("spawnflags");
     } else {
         this->spawnflags = 0;
     }
 
-    // TODO: Add angle and origin reading from KV
     if (this->keyvalues.hasChild("angles")) {
-        this->angles = EulerAngles(0.f, 0.f, 0.f);
+        this->angles = this->keyvalues["origin"].getValue<EulerAngles>();
         this->keyvalues.removeChild("angles");
     } else {
         this->angles = EulerAngles(0.f, 0.f, 0.f);
     }
 
     if (this->keyvalues.hasChild("origin")) {
-        this->origin = Vec3f(0.f, 0.f, 0.f);
+        this->origin = this->keyvalues["origin"].getValue<Vec3f>();
         this->keyvalues.removeChild("origin");
     } else {
         this->origin = Vec3f(0.f, 0.f, 0.f);
