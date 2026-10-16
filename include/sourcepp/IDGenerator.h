@@ -1,0 +1,8 @@
+//
+// Created by trico on 16-10-26.
+//
+
+#ifndef QC_CONFIGURE_IDGENERATOR_H
+#define QC_CONFIGURE_IDGENERATOR_H
+
+#endif //QC_CONFIGURE_IDGENERATOR_H
