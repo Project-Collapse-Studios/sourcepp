@@ -9,6 +9,8 @@
 #include <sourcepp/parser/Text.h>
 #include <sourcepp/String.h>
 
+#include <sourcepp/Math.h>
+
 namespace kvpp {
 
 #ifdef USE_KV1WRITER // Defined in KV1Writer.h before importing us.
@@ -28,7 +30,8 @@ concept KV1ValueType = std::convertible_to<V, std::string_view>
                     || std::same_as<V, bool>
                     || std::same_as<V, int32_t>
                     || std::same_as<V, int64_t>
-                    || std::same_as<V, float>;
+                    || std::same_as<V, float>
+					|| std::same_as<V, sourcepp::math::Vec3f>;
 
 template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
@@ -79,6 +82,20 @@ public:
 			float out = 0.f;
 			sourcepp::string::toFloat(this->value, out);
 			return out;
+		} else if constexpr (std::same_as<V, sourcepp::math::Vec3f>) {
+			auto splits = sourcepp::string::split(this->value, ' ');
+			float x = 0, y = 0, z = 0;
+			if (splits.size() >= 1) {
+				sourcepp::string::toFloat(splits[0], x);
+			}
+			if (splits.size() >= 2) {
+				sourcepp::string::toFloat(splits[1], y);
+			}
+			if (splits.size() >= 3) {
+				sourcepp::string::toFloat(splits[2], z);
+			}
+
+			return sourcepp::math::Vec3f(x, y, z);
 		}
 		return V{};
 	}

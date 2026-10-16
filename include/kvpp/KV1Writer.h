@@ -60,6 +60,20 @@ public:
 			float out = 0.f;
 			sourcepp::string::toFloat(this->value, out);
 			return out;
+		} else if constexpr (std::same_as<V, sourcepp::math::Vec3f>) {
+			auto splits = sourcepp::string::split(this->value, ' ');
+			float x = 0, y = 0, z = 0;
+			if (splits.size() >= 1) {
+				sourcepp::string::toFloat(splits[0], x);
+			}
+			if (splits.size() >= 2) {
+				sourcepp::string::toFloat(splits[1], y);
+			}
+			if (splits.size() >= 3) {
+				sourcepp::string::toFloat(splits[2], z);
+			}
+
+			return sourcepp::math::Vec3f(x, y, z);
 		}
 		return V{};
 	}
