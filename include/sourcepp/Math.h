@@ -317,6 +317,17 @@ struct Vec {
 		return this->scale(other).sum();
 	}
 
+	template<Arithmetic PO>
+	[[nodiscard]] constexpr Vec<3, PO> cross(const Vec<3, PO>& other) const requires (S_ == 3) {
+		// Cross product is only defined for 3 and 7 dimensional vectors.
+		// I WILL NOT program in a 7 dimensional cross product.
+		return Vec<3, PO>(
+			this->operator[](1) * other[2] - this->operator[](2) * other[1],
+			this->operator[](2) * other[0] - this->operator[](0) * other[2],
+			this->operator[](0) * other[1] - this->operator[](1) * other[0]
+			);
+	}
+
 	[[nodiscard]] constexpr Vec abs() const {
 		auto out = *this;
 		for (uint8_t i = 0; i < S; i++) {
@@ -459,6 +470,14 @@ struct Mat {
 	[[nodiscard]] P* operator[](uint8_t i) { return this->values[i]; }
 
 	[[nodiscard]] const P* operator[](uint8_t i) const { return this->values[i]; }
+
+	[[nodiscard]] P& operator()(uint8_t i, uint8_t j) {
+		return this->values[i][j];
+	}
+
+	[[nodiscard]] const P& operator()(uint8_t i, uint8_t j) const {
+		return this->values[i][j];
+	}
 };
 static_assert(std::is_trivially_copyable_v<Mat<2, 2, float>>);
 
