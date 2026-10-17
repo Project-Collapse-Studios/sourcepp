@@ -72,8 +72,8 @@ public:
         }
 
         // Returns keyvalues. Read-only
-        [[nodiscard]] kvpp::KV1<key_base> GetAllKeyValues() const {
-            return kvpp::KV1{this->keyvalues};
+        [[nodiscard]] const kvpp::KV1Writer<key_base>& GetAllKeyValues() const {
+            return this->keyvalues;
         }
 
         void SetKeyValue(const key_base& key, const std::string& value) {
