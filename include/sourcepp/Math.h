@@ -328,6 +328,12 @@ struct Vec {
 			);
 	}
 
+	constexpr float norm() {
+		float len = std::sqrt(this->dot(*this));
+		this->operator=(*this / len);
+		return len;
+	}
+
 	[[nodiscard]] constexpr Vec abs() const {
 		auto out = *this;
 		for (uint8_t i = 0; i < S; i++) {
