@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <BufferStream.h>
-#include <kvpp/KV1Writer.h>
+#include <kvpp/KV1.h>
 #include <sourcepp/parser/Text.h>
 #include <sourcepp/FS.h>
 

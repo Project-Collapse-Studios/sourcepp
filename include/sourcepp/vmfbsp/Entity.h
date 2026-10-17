@@ -2,7 +2,7 @@
 
 #include <string>
 #include <sourcepp/Math.h>
-#include <kvpp/KV1Writer.h>
+#include <kvpp/KV1.h>
 #include "Output.h"
 
 #ifdef Use_STRINGVIEW
@@ -10,7 +10,6 @@ using key_base = std::string_view;
 #else
 using key_base = std::string;
 #endif
-#include <iostream>
 /*
  * This class represents an Point Entity in the source engine.
  * It stores the classname, origin and additional keyvalues.
