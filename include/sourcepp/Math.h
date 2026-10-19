@@ -349,6 +349,15 @@ struct Vec {
 	[[nodiscard]] constexpr bool isZero() const {
 		return *this == zero();
 	}
+
+	friend std::ostream& operator<<(std::ostream& stream, const Vec<S_, P>& in) {
+		stream << "[";
+		for (uint8_t i = 0; i < S_ - 1; ++i) {
+			stream << in.values[i] << ", ";
+		}
+		stream << in.values[S_ - 1] << "]";
+		return stream;
+	}
 };
 static_assert(std::is_trivially_copyable_v<Vec<2, float>>);
 
