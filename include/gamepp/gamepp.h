@@ -29,13 +29,13 @@ public:
 	 * Get the window position on-screen.
 	 * @return The window position.
 	 */
-	[[nodiscard]] sourcepp::math::Vec2i getWindowPos() const;
+	[[nodiscard]] mathpp::Vec2i getWindowPos() const;
 
 	/**
 	 * Get the window size on-screen.
 	 * @return The window size.
 	 */
-	[[nodiscard]] sourcepp::math::Vec2i getWindowSize() const;
+	[[nodiscard]] mathpp::Vec2i getWindowSize() const;
 
 	/**
 	 * Send a command to the engine (ran as if it was entered into the console by the user).

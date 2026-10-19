@@ -26,9 +26,9 @@ public:
 	};
 
 	struct Glyph {
-		sourcepp::math::Vec2ui16 position;
-		sourcepp::math::Vec2ui16 size;
-		sourcepp::math::Vec3i16 abcSpacing;
+		mathpp::Vec2ui16 position;
+		mathpp::Vec2ui16 size;
+		mathpp::Vec3i16 abcSpacing;
 	};
 
 	explicit VBF(std::span<const std::byte> vbfData);
@@ -37,9 +37,9 @@ public:
 
 	[[nodiscard]] explicit operator bool() const;
 
-	[[nodiscard]] sourcepp::math::Vec2ui16 getPageSize() const;
+	[[nodiscard]] mathpp::Vec2ui16 getPageSize() const;
 
-	[[nodiscard]] sourcepp::math::Vec2ui16 getMaxGlyphSize() const;
+	[[nodiscard]] mathpp::Vec2ui16 getMaxGlyphSize() const;
 
 	[[nodiscard]] Flags getFlags() const;
 
@@ -49,8 +49,8 @@ public:
 
 protected:
 	uint32_t version = 0;
-	sourcepp::math::Vec2ui16 pageSize{};
-	sourcepp::math::Vec2ui16 maxGlyphSize{};
+	mathpp::Vec2ui16 pageSize{};
+	mathpp::Vec2ui16 maxGlyphSize{};
 	Flags flags = FLAG_NONE;
 	uint16_t ascent = 0;
 	std::array<Glyph, 256> glyphs{};

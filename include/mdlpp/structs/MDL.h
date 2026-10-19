@@ -17,8 +17,8 @@ struct SrcBoneTransform {
 	//int32_t nameIndex;
 	std::string name;
 
-	sourcepp::math::Mat3x4f pretransform;
-	sourcepp::math::Mat3x4f posttransform;
+	mathpp::Mat3x4f pretransform;
+	mathpp::Mat3x4f posttransform;
 };
 
 struct LinearBone {
@@ -26,13 +26,13 @@ struct LinearBone {
 
 	std::vector<int32_t> flags;
 	std::vector<int32_t> parent;
-	std::vector<sourcepp::math::Vec3f> position;
-	std::vector<sourcepp::math::Quat> quaternion;
-	std::vector<sourcepp::math::Vec3f> rotation;
-	std::vector<sourcepp::math::Mat3x4f> poseToBone;
-	std::vector<sourcepp::math::Vec3f> positionScale;
-	std::vector<sourcepp::math::Vec3f> rotationScale;
-	std::vector<sourcepp::math::Quat> quaternionAlignment;
+	std::vector<mathpp::Vec3f> position;
+	std::vector<mathpp::Quat> quaternion;
+	std::vector<mathpp::Vec3f> rotation;
+	std::vector<mathpp::Mat3x4f> poseToBone;
+	std::vector<mathpp::Vec3f> positionScale;
+	std::vector<mathpp::Vec3f> rotationScale;
+	std::vector<mathpp::Quat> quaternionAlignment;
 };
 
 struct BoneFlexDriverControl {
@@ -88,13 +88,13 @@ struct Bone {
 
 	int32_t parent;
 	std::array<int32_t, 6> boneController;
-	sourcepp::math::Vec3f position;
-	sourcepp::math::Quat rotationQuat;
-	sourcepp::math::Vec3f rotationEuler;
-	sourcepp::math::Vec3f positionScale;
-	sourcepp::math::Vec3f rotationScale;
-	sourcepp::math::Mat3x4f poseToBose;
-	sourcepp::math::Quat alignment;
+	mathpp::Vec3f position;
+	mathpp::Quat rotationQuat;
+	mathpp::Vec3f rotationEuler;
+	mathpp::Vec3f positionScale;
+	mathpp::Vec3f rotationScale;
+	mathpp::Mat3x4f poseToBose;
+	mathpp::Quat alignment;
 	Flags flags;
 	int32_t procType;
 	int32_t procIndex;
@@ -146,8 +146,8 @@ struct AnimBoneData {
 	Flags flags;
 
 	// static data when RAW flags are set
-	std::variant<std::monostate, sourcepp::math::QuatCompressed48, sourcepp::math::QuatCompressed64> staticRotation;
-	std::optional<sourcepp::math::Vec3Compressed48> staticPosition;
+	std::variant<std::monostate, mathpp::QuatCompressed48, mathpp::QuatCompressed64> staticRotation;
+	std::optional<mathpp::Vec3Compressed48> staticPosition;
 
 	// keyframe data when ANIM flags are set
 	std::optional<AnimValuePtr> animRotationPtr;
@@ -158,13 +158,13 @@ struct AnimBoneData {
 SOURCEPP_BITFLAGS_ENUM(AnimBoneData::Flags)
 
 struct IKError {
-	sourcepp::math::Vec3f position;
-	sourcepp::math::Quat rotation;
+	mathpp::Vec3f position;
+	mathpp::Quat rotation;
 };
 
 struct CompressedIKError {
-	sourcepp::math::Vec<6, float> scale;
-	sourcepp::math::Vec<6, int16_t> offset;
+	mathpp::Vec<6, float> scale;
+	mathpp::Vec<6, int16_t> offset;
 	std::vector<AnimValue> animValues;
 };
 
@@ -177,8 +177,8 @@ struct IKRule {
 	float height;
 	float radius;
 	float floor;
-	sourcepp::math::Vec3f pos;
-	sourcepp::math::Quat q;
+	mathpp::Vec3f pos;
+	mathpp::Quat q;
 
 	//int32_t compressedIKErrorIndex;
 	std::optional<CompressedIKError> compressedIKError;
@@ -328,8 +328,8 @@ struct SequenceDesc {
 	//int32_t eventIndex;
 	std::vector<Event> events;
 
-	sourcepp::math::Vec3f boundingBoxMin;
-	sourcepp::math::Vec3f boundingBoxMax;
+	mathpp::Vec3f boundingBoxMin;
+	mathpp::Vec3f boundingBoxMax;
 
 	int32_t blendCount;
 
@@ -415,11 +415,11 @@ struct Eyeball {
 	std::string name;
 
 	int32_t bone;
-	sourcepp::math::Vec3f org;
+	mathpp::Vec3f org;
 	float zOffset;
 	float radius;
-	sourcepp::math::Vec3f up;
-	sourcepp::math::Vec3f forward;
+	mathpp::Vec3f up;
+	mathpp::Vec3f forward;
 	int32_t texture;
 
 	//int32_t unused1;
@@ -498,7 +498,7 @@ struct Mesh {
 
 	int32_t meshID;
 
-	sourcepp::math::Vec3f center;
+	mathpp::Vec3f center;
 
 	int32_t modelVertexData;
 	std::array<int32_t, MAX_LOD_COUNT> numLODVertexes;
@@ -510,9 +510,9 @@ struct Attachment {
 	std::string name;
 
 	int32_t bone;
-	sourcepp::math::Vec3f position;
+	mathpp::Vec3f position;
 
-	sourcepp::math::Mat3x4f localMatrix;
+	mathpp::Mat3x4f localMatrix;
 	//int32_t _unused[8];
 };
 
@@ -610,8 +610,8 @@ struct FlexRule {
 // IK structs
 struct IKLink {
 	int32_t bone;
-	sourcepp::math::Vec3f kneeDir;
-	//sourcepp::math::Vec3f unused;
+	mathpp::Vec3f kneeDir;
+	//mathpp::Vec3f unused;
 };
 
 struct IKChain {
@@ -628,7 +628,7 @@ struct IKChain {
 // Mouth struct
 struct Mouth {
 	int32_t bone;
-	sourcepp::math::Vec3f forward;
+	mathpp::Vec3f forward;
 	int32_t flexDescIndex;
 };
 
@@ -710,12 +710,12 @@ struct MDL {
 	std::string name;
 	//int32_t dataLength;
 
-	sourcepp::math::Vec3f eyePosition;
-	sourcepp::math::Vec3f illuminationPosition;
-	sourcepp::math::Vec3f hullMin;
-	sourcepp::math::Vec3f hullMax;
-	sourcepp::math::Vec3f viewBBoxMin;
-	sourcepp::math::Vec3f viewBBoxMax;
+	mathpp::Vec3f eyePosition;
+	mathpp::Vec3f illuminationPosition;
+	mathpp::Vec3f hullMin;
+	mathpp::Vec3f hullMax;
+	mathpp::Vec3f viewBBoxMin;
+	mathpp::Vec3f viewBBoxMax;
 
 	Flags flags;
 

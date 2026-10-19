@@ -13,9 +13,9 @@ namespace mdlpp {
  */
 struct BakedModel {
 	struct Vertex {
-		sourcepp::math::Vec3f position;
-		sourcepp::math::Vec3f normal;
-		sourcepp::math::Vec2f uv;
+		mathpp::Vec3f position;
+		mathpp::Vec3f normal;
+		mathpp::Vec2f uv;
 	};
 	std::vector<Vertex> vertices;
 

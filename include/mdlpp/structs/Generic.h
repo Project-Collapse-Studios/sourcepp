@@ -14,8 +14,8 @@ constexpr int MAX_BONES_PER_VERTEX = 3;
 struct BBox {
 	int32_t bone;
 	int32_t group;
-	sourcepp::math::Vec3f bboxMin;
-	sourcepp::math::Vec3f bboxMax;
+	mathpp::Vec3f bboxMin;
+	mathpp::Vec3f bboxMax;
 
 	//int32_t hitboxNameOffset;
 	std::string name;
@@ -48,8 +48,8 @@ struct Movement {
 	float velocityStart;
 	float velocityEnd;
 	float yawEnd;
-	sourcepp::math::Vec3f movement;
-	sourcepp::math::Vec3f relativePosition;
+	mathpp::Vec3f movement;
+	mathpp::Vec3f relativePosition;
 };
 SOURCEPP_BITFLAGS_ENUM(Movement::Flags)
 
@@ -72,6 +72,6 @@ union AnimValue {
 static_assert(sizeof(AnimValue) == 2);
 
 // x/y/z or pitch/yaw/roll
-using AnimValuePtr = sourcepp::math::Vec3i16;
+using AnimValuePtr = mathpp::Vec3i16;
 
 } // namespace mdlpp

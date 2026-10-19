@@ -47,7 +47,7 @@ using KV1BinaryValue = std::variant<
 	float,
 	KV1BinaryPointer,
 	std::wstring,
-	sourcepp::math::Vec4ui8,
+	mathpp::Vec4ui8,
 	uint64_t
 >;
 
@@ -57,7 +57,7 @@ concept KV1BinaryValueNoChildren = std::same_as<V, std::string>
                                 || std::same_as<V, float>
                                 || std::same_as<V, KV1BinaryPointer>
                                 || std::same_as<V, std::wstring>
-                                || std::same_as<V, sourcepp::math::Vec4ui8>
+                                || std::same_as<V, mathpp::Vec4ui8>
                                 || std::same_as<V, uint64_t>;
 
 class KV1BinaryElement {

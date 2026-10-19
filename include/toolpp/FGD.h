@@ -100,7 +100,7 @@ public:
 
 	[[nodiscard]] int getVersion() const;
 
-	[[nodiscard]] sourcepp::math::Vec2i getMapSize() const;
+	[[nodiscard]] mathpp::Vec2i getMapSize() const;
 
 	[[nodiscard]] const std::unordered_map<std::string_view, Entity>& getEntities() const;
 
@@ -116,7 +116,7 @@ protected:
 	std::list<std::string> backingData;
 
 	int version = 0;
-	sourcepp::math::Vec2i mapSize{};
+	mathpp::Vec2i mapSize{};
 	std::unordered_map<std::string_view, Entity> entities;
 	std::vector<std::string_view> materialExclusionDirs;
 	std::unordered_map<std::string_view, std::string_view> mainKeyValues;
@@ -189,7 +189,7 @@ public:
 
 	FGDWriter& version(int version);
 
-	FGDWriter& mapSize(sourcepp::math::Vec2i mapSize);
+	FGDWriter& mapSize(mathpp::Vec2i mapSize);
 
 	FGDWriter& materialExclusionDirs(std::initializer_list<std::string_view> dirs);
 

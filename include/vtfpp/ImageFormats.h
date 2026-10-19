@@ -910,7 +910,7 @@ namespace ImageDimensions {
 		dim >>= 1;
 	}
 	if (addCompressedFormatPadding) {
-		dim += sourcepp::math::paddingForAlignment(4, dim);
+		dim += mathpp::paddingForAlignment(4, dim);
 	}
 	return dim;
 }
@@ -930,8 +930,8 @@ namespace ImageDimensions {
 		if ((height >>= 1) < 1) height = 1;
 	}
 	if (addCompressedFormatPadding) {
-		width  += sourcepp::math::paddingForAlignment(4, width);
-		height += sourcepp::math::paddingForAlignment(4, height);
+		width  += mathpp::paddingForAlignment(4, width);
+		height += mathpp::paddingForAlignment(4, height);
 	}
 	return {!originalWidth ? 0 : width, !originalHeight ? 0 : height};
 }
@@ -953,8 +953,8 @@ namespace ImageDimensions {
 		if ((depth  >>= 1) < 1) depth  = 1;
 	}
 	if (addCompressedFormatPadding) {
-		width  += sourcepp::math::paddingForAlignment(4, width);
-		height += sourcepp::math::paddingForAlignment(4, height);
+		width  += mathpp::paddingForAlignment(4, width);
+		height += mathpp::paddingForAlignment(4, height);
 	}
 	return {!originalWidth ? 0 : width, !originalHeight ? 0 : height, !originalDepth ? 0 : depth};
 }
@@ -1045,7 +1045,7 @@ namespace ImageFormatDetails {
 			length += ImageFormatDetails::getDataLength(format, mipWidth, mipHeight, mipDepth) * faceCount;
 		}
 		if (padded && j + 1 != frameCount && length > 512) {
-			length += sourcepp::math::paddingForAlignment(512, length);
+			length += mathpp::paddingForAlignment(512, length);
 		}
 	}
 	return length;
@@ -1128,7 +1128,7 @@ namespace ImageFormatDetails {
 			}
 		}
 		if (padded && j + 1 != frameCount && offset > 512) {
-			offset += sourcepp::math::paddingForAlignment(512, offset);
+			offset += mathpp::paddingForAlignment(512, offset);
 		}
 	}
 	return false;

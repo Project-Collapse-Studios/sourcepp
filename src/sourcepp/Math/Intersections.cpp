@@ -1,8 +1,8 @@
 #include <sourcepp/Math/Intersections.h>
 
-using Point = sourcepp::math::Vec3f;
-using Versor = sourcepp::math::Vec3f;
-using namespace sourcepp::math;
+using Point = mathpp::Vec3f;
+using Versor = mathpp::Vec3f;
+using namespace mathpp;
 
 bool Intersect(const Plane& plane1, const Plane& plane2, ParametricLine& out) {
     const auto& norm1 = plane1.GetNormal();

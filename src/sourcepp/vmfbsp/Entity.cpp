@@ -1,6 +1,6 @@
 #include "sourcepp/vmfbsp/Entity.h"
 
-using namespace sourcepp::math;
+using namespace mathpp;
 using Keyvalues = kvpp::KV1Writer<key_base>;
 
 Entity::Entity(const std::string& classname_, const Vec3f& origin_, const EulerAngles& angles_) {

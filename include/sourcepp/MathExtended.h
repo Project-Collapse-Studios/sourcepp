@@ -10,7 +10,7 @@
 #include <array>
 #include <cstddef>
 
-namespace sourcepp::math {
+namespace mathpp {
 
 // Evaluate Chebyshev series
 template<std::size_t L>
@@ -84,4 +84,4 @@ template<std::size_t L>
 	return sin(a) / a;
 }
 
-} // namespace sourcepp::math
+} // namespace mathpp

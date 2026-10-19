@@ -23,7 +23,7 @@ using std::uint32_t;
 using std::uint64_t;
 using half_float::half;
 
-namespace sourcepp::math {
+namespace mathpp {
 
 template<std::floating_point F>
 constexpr F pi = std::numbers::pi_v<F>;
@@ -582,4 +582,4 @@ SOURCEPP_MAT_DEFINE(4, 3);
 
 #undef SOURCEPP_MAT_DEFINE
 
-} // namespace sourcepp::math
+} // namespace mathpp

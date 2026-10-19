@@ -27,11 +27,11 @@ struct BoneWeight {
 struct Vertex {
 	BoneWeight boneWeight;
 
-	sourcepp::math::Vec3f position{};
-	sourcepp::math::Vec3f normal{};
-	sourcepp::math::Vec2f uv{};
+	mathpp::Vec3f position{};
+	mathpp::Vec3f normal{};
+	mathpp::Vec2f uv{};
 
-	sourcepp::math::Vec4f tangent{}; // Taken from tangents data section
+	mathpp::Vec4f tangent{}; // Taken from tangents data section
 };
 
 struct VVD {

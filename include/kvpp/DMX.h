@@ -37,17 +37,17 @@ struct Color {
 	uint8_t a;
 };
 
-using Vector2 = sourcepp::math::Vec2f;
+using Vector2 = mathpp::Vec2f;
 
-using Vector3 = sourcepp::math::Vec3f;
+using Vector3 = mathpp::Vec3f;
 
-using Vector4 = sourcepp::math::Vec4f;
+using Vector4 = mathpp::Vec4f;
 
-struct EulerAngles : sourcepp::math::EulerAngles {};
+struct EulerAngles : mathpp::EulerAngles {};
 
-struct Quaternion : sourcepp::math::Quat {};
+struct Quaternion : mathpp::Quat {};
 
-using Matrix4x4 = sourcepp::math::Mat4x4f;
+using Matrix4x4 = mathpp::Mat4x4f;
 
 enum class IDv1 : uint8_t {
 	INVALID = 0,

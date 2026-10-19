@@ -63,8 +63,8 @@ struct Resource {
 	std::span<std::byte> data;
 
 	struct PCC {
-		sourcepp::math::Vec4d origin;
-		sourcepp::math::Mat4x4f inverseTransform;
+		mathpp::Vec4d origin;
+		mathpp::Mat4x4f inverseTransform;
 	};
 
 	using ConvertedData = std::variant<
@@ -357,9 +357,9 @@ public:
 
 	void setStartFrame(uint16_t newStartFrame);
 
-	[[nodiscard]] sourcepp::math::Vec3f getReflectivity() const;
+	[[nodiscard]] mathpp::Vec3f getReflectivity() const;
 
-	void setReflectivity(sourcepp::math::Vec3f newReflectivity);
+	void setReflectivity(mathpp::Vec3f newReflectivity);
 
 	void computeReflectivity();
 
@@ -535,7 +535,7 @@ protected:
 	uint16_t frameCount = 1;
 	uint16_t startFrame = 0;
 
-	sourcepp::math::Vec3f reflectivity{0.2f, 0.2f, 0.2f};
+	mathpp::Vec3f reflectivity{0.2f, 0.2f, 0.2f};
 
 	float bumpMapScale = 0.f;
 	ImageFormat format = ImageFormat::EMPTY;

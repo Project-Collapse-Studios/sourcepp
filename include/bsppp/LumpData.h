@@ -10,7 +10,7 @@ namespace bsppp {
 //region Lump 1 (Planes)
 
 struct BSPPlane_v0 {
-	sourcepp::math::Vec3f normal;
+	mathpp::Vec3f normal;
 	float dist;
 	int32_t type;
 };
@@ -22,7 +22,7 @@ using BSPPlane = BSPPlane_v0;
 //region Lump 2 (Texture Data)
 
 struct BSPTextureData_v0 {
-	sourcepp::math::Vec3f reflectivity;
+	mathpp::Vec3f reflectivity;
 	int32_t nameStringTableID;
 	int32_t width;
 	int32_t height;
@@ -37,7 +37,7 @@ using BSPTextureData = BSPTextureData_v0;
 //region Lump 3 (Vertices)
 
 struct BSPVertex_v0 {
-	sourcepp::math::Vec3f position;
+	mathpp::Vec3f position;
 };
 
 using BSPVertex = BSPVertex_v0;
@@ -48,9 +48,9 @@ using BSPVertex = BSPVertex_v0;
 
 struct BSPNode_v0 {
 	uint32_t planeNum;
-	sourcepp::math::Vec2i children;
-	sourcepp::math::Vec3i16 mins;
-	sourcepp::math::Vec3i16 maxs;
+	mathpp::Vec2i children;
+	mathpp::Vec3i16 mins;
+	mathpp::Vec3i16 maxs;
 	uint16_t firstFace;
 	uint16_t numFaces;
 	int16_t area;
@@ -59,9 +59,9 @@ struct BSPNode_v0 {
 
 struct BSPNode_v1 {
 	uint32_t planeNum;
-	sourcepp::math::Vec2i children;
-	sourcepp::math::Vec3f mins;
-	sourcepp::math::Vec3f maxs;
+	mathpp::Vec2i children;
+	mathpp::Vec3f mins;
+	mathpp::Vec3f maxs;
 	uint32_t firstFace;
 	uint32_t numFaces;
 	int16_t area;
@@ -97,10 +97,10 @@ using BSPNode = BSPNode_v1;
 //region Lump 6 (Texture Info)
 
 struct BSPTextureInfo_v0 {
-	sourcepp::math::Vec4f textureVector1;
-	sourcepp::math::Vec4f textureVector2;
-	sourcepp::math::Vec4f lightmapVector1;
-	sourcepp::math::Vec4f lightmapVector2;
+	mathpp::Vec4f textureVector1;
+	mathpp::Vec4f textureVector2;
+	mathpp::Vec4f lightmapVector1;
+	mathpp::Vec4f lightmapVector2;
 	int32_t flags;
 	int32_t textureData;
 };
@@ -120,11 +120,11 @@ struct BSPFace_v1 {
 	int16_t texInfo;
 	int16_t dispInfo;
 	int16_t surfaceFogVolumeID;
-	sourcepp::math::Vec4ui8 styles;
+	mathpp::Vec4ui8 styles;
 	int32_t lightOffset;
 	float area;
-	sourcepp::math::Vec2i lightmapTextureMinsInLuxels;
-	sourcepp::math::Vec2i lightmapTextureSizeInLuxels;
+	mathpp::Vec2i lightmapTextureMinsInLuxels;
+	mathpp::Vec2i lightmapTextureSizeInLuxels;
 	int32_t originalFace;
 	uint16_t numPrims;
 	uint16_t firstPrimID;
@@ -140,11 +140,11 @@ struct BSPFace_v2 {
 	int32_t texInfo;
 	int32_t dispInfo;
 	int32_t surfaceFogVolumeID;
-	sourcepp::math::Vec4ui8 styles;
+	mathpp::Vec4ui8 styles;
 	int32_t lightOffset;
 	float area;
-	sourcepp::math::Vec2i lightmapTextureMinsInLuxels;
-	sourcepp::math::Vec2i lightmapTextureSizeInLuxels;
+	mathpp::Vec2i lightmapTextureMinsInLuxels;
+	mathpp::Vec2i lightmapTextureSizeInLuxels;
 	int32_t originalFace;
 	uint32_t enableShadows : 1;
 	uint32_t numPrims : 31;
@@ -226,9 +226,9 @@ using BSPSurfEdge = BSPSurfEdge_v0;
 //region Lump 14 (Brush Models)
 
 struct BSPBrushModel_v0 {
-	sourcepp::math::Vec3f min;
-	sourcepp::math::Vec3f max;
-	sourcepp::math::Vec3f origin;
+	mathpp::Vec3f min;
+	mathpp::Vec3f max;
+	mathpp::Vec3f origin;
 	int32_t headNode;
 	int32_t firstFace;
 	int32_t numFaces;

@@ -448,7 +448,7 @@ bool vmfpp::VMF::load(const kvpp::KV1<> &kv) {
     return true;
 }
 
-sourcepp::math::Vec3i8 vmfpp::VMF::parseColor(const std::string_view str) {
+mathpp::Vec3i8 vmfpp::VMF::parseColor(const std::string_view str) {
 
     const auto splitStr = sourcepp::string::split(str, ' ');
     if (splitStr.size() != 3)
@@ -456,7 +456,7 @@ sourcepp::math::Vec3i8 vmfpp::VMF::parseColor(const std::string_view str) {
     return {std::stoi(splitStr[0]), std::stoi(splitStr[1]), std::stoi(splitStr[2])};
 }
 
-sourcepp::math::Vec3f vmfpp::VMF::parsePlane(const std::string_view str) {
+mathpp::Vec3f vmfpp::VMF::parsePlane(const std::string_view str) {
 
     const auto splitStr = sourcepp::string::split(str, ' ');
     if (splitStr.size() != 3)

@@ -38,7 +38,7 @@ inline void register_python(py::module_& m) {
 			.def_rw("b", &Color::b)
 			.def_rw("a", &Color::a);
 
-		py::class_<EulerAngles, sourcepp::math::EulerAngles>(DMXValue, "EulerAngles"); // NOLINT(*-unused-raii)
+		py::class_<EulerAngles, mathpp::EulerAngles>(DMXValue, "EulerAngles"); // NOLINT(*-unused-raii)
 
 		py::class_<Quaternion>(DMXValue, "Quaternion"); // NOLINT(*-unused-raii)
 

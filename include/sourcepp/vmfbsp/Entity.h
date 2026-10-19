@@ -27,7 +27,7 @@ public:
         // Constructors and destructors
         Entity() = delete;
 
-        [[nodiscard]] static std::unique_ptr<Entity> CreateByComponents(const std::string& classname_, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f), const sourcepp::math::EulerAngles& angles_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f)) {
+        [[nodiscard]] static std::unique_ptr<Entity> CreateByComponents(const std::string& classname_, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f)) {
                 return std::unique_ptr<Entity>(new Entity(classname_, origin_, angles_));
         }
 
@@ -62,11 +62,11 @@ public:
             this->classname = name;
         }
 
-        [[nodiscard]] sourcepp::math::Vec3f GetOrigin() const {
+        [[nodiscard]] mathpp::Vec3f GetOrigin() const {
             return this->origin;
         }
 
-        void SetOrigin(const sourcepp::math::Vec3f& origin_) {
+        void SetOrigin(const mathpp::Vec3f& origin_) {
             this->origin = origin_;
         }
 
@@ -128,13 +128,13 @@ public:
     protected:
         kvpp::KV1Writer<> keyvalues;
         std::string classname;
-        sourcepp::math::Vec3f origin;
-        sourcepp::math::EulerAngles angles;
+        mathpp::Vec3f origin;
+        mathpp::EulerAngles angles;
         std::vector<Output> outputs;
         unsigned int spawnflags;
 
         // Constructors:
-        explicit Entity(const std::string&, const sourcepp::math::Vec3f& origin_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f), const sourcepp::math::EulerAngles& angles_ = sourcepp::math::Vec3f(0.0f, 0.0f, 0.0f));
+        explicit Entity(const std::string&, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f));
         explicit Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_);
         // TODO:
         // Entity(kv_binary);

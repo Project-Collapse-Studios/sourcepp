@@ -47,7 +47,7 @@ math::Vec2i GameInstance::getWindowPos() const {
 	return {rect.left, rect.top};
 }
 
-sourcepp::math::Vec2i GameInstance::getWindowSize() const {
+mathpp::Vec2i GameInstance::getWindowSize() const {
 	RECT rect;
 	GetWindowRect(reinterpret_cast<HWND>(this->hwnd), &rect);
 	return {rect.right - rect.left, rect.bottom - rect.top};
