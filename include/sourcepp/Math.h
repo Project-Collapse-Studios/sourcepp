@@ -486,47 +486,59 @@ public:
 		return this->values[i][j];
 	}
 
-	[[nodiscard]] P det() const requires (M == N) {
-		Mat<M, M, P> m = *this; // Copy
-		float det_mult = 1; // Determinant multiplier
+	[[nodiscard]] P det() const requires (M == N)
+	{
+		if constexpr (M == 1) {
+			return this->values[0][0];
+		} else if constexpr (M == 2) {
+			return this->values[0][0] * this->values[1][1] -
+				   this->values[0][1] * this->values[1][0];
+		} else if constexpr (M == 3) {
+			return this->values[0][0] * (this->values[1][1] * this->values[2][2] - this->values[1][2] * this->values[2][1]) -
+				   this->values[0][1] * (this->values[1][0] * this->values[2][2] - this->values[1][2] * this->values[2][0]) +
+				   this->values[0][2] * (this->values[1][0] * this->values[2][1] - this->values[1][1] * this->values[2][0]);
+		} else {
+			Mat<M, M, P> m = *this; // Copy
+			float det_mult = 1; // Determinant multiplier
 
-		// Computes an upper triangular matrix
-		for (uint8_t j = 0; j < M; ++j) { // Over column index. First row doesn't interest us.
+			// Computes an upper triangular matrix
+			for (uint8_t j = 0; j < M; ++j) { // Over column index. First row doesn't interest us.
 
-			float diag = m(j, j); // Cast onto float
-			if (diag != 0) { // If the diagonal element isn't 0, we'll try zeroing out the values below
-				for (uint8_t i = j + 1; i < M; ++i) { // Over row index, but only to the middle
-					if (m(i, j) == 0 && diag == 0) {return 0;} // Matrix is not linearly independent.
-					if (m(i, j) == 0) {continue;} // Skip. We're going to include this later (pivot).
+				float diag = m(j, j); // Cast onto float
+				if (diag != 0) { // If the diagonal element isn't 0, we'll try zeroing out the values below
+					for (uint8_t i = j + 1; i < M; ++i) { // Over row index, but only to the middle
+						if (m(i, j) == 0 && diag == 0) {return 0;} // Matrix is not linearly independent.
+						if (m(i, j) == 0) {continue;} // Skip. We're going to include this later (pivot).
 
-					const float row_mult = m(i, j) / diag;
-					for (uint8_t k = 0; k < M; ++k) { // Substract from the whole row.
-						m(i, k) -= row_mult * m(j, k);
+						const float row_mult = m(i, j) / diag;
+						for (uint8_t k = 0; k < M; ++k) { // Substract from the whole row.
+							m(i, k) -= row_mult * m(j, k);
+						}
 					}
+
+				} else if (j < M) { // Diagonal is 0 - shift it to our place, unless we're at the last row
+
+					for (uint8_t k = 0; k < N; ++k) {
+						P val = m(j, k);
+						m(j, k) = m(j + 1, k);
+						m(j+1, k) = val;
+
+					}
+					// We performed a pivot operation, determinant is now negative.
+					det_mult *= -1;
+				} else { // Last row was zero'ed out. Matrix not linearly independent.
+					return 0;
 				}
-
-			} else if (j < M) { // Diagonal is 0 - shift it to our place, unless we're at the last row
-
-				for (uint8_t k = 0; k < N; ++k) {
-					P val = m(j, k);
-					m(j, k) = m(j + 1, k);
-					m(j+1, k) = val;
-
-				}
-				// We performed a pivot operation, determinant is now negative.
-				det_mult *= -1;
-			} else { // Last row was zero'ed out. Matrix not linearly independent.
-				return 0;
 			}
-		}
 
-		// We have an upper triangular matrix, now actually compute the determinant
-		float det = 1;
-		for (uint8_t i = 0; i < M; ++i) {
-			det *= m(i, i);
+			// We have an upper triangular matrix, now actually compute the determinant
+			float det = 1;
+			for (uint8_t i = 0; i < M; ++i) {
+				det *= m(i, i);
+			}
+			det *= det_mult;
+			return det;
 		}
-		det *= det_mult;
-		return det;
 	}
 };
 static_assert(std::is_trivially_copyable_v<Mat<2, 2, float>>);
