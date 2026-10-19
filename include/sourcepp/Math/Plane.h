@@ -1,8 +1,6 @@
 #pragma once
 
 #include <sourcepp/Math.h>
-#include <sourcepp/Math/ParametricLine.h>
-#include <sourcepp/Math/Intersections.h> // This is actually used!
 
 class Plane {
     using Versor = sourcepp::math::Vec3f;
@@ -14,14 +12,18 @@ class Plane {
     int type = 0;
 
 public:
-    Plane(const sourcepp::math::Vec3f& normal, float distance, int type):
+    /// Create a plane using a direction vector, distance and type = 0.
+    /// Direction vector gets normalized to a versor, distance gets accounted for.
+    Plane(const sourcepp::math::Vec3f& normal, const float distance, const int type = 0):
         normal(normal),
         distance(distance),
         type(type) {
-        this->normal.norm();
+        this->distance /= this->normal.norm(); // If we normalize the vector we also need to account for the distance being different
     };
 
-    Plane(const Point& v1, const Point& v2, const Point& v3, float distance, int type):
+    /// Create a plane using 3 points, distance and type = 0.
+    /// The distance between those points doesn't matter, only their location as the direction vector gets normalized.
+    Plane(const Point& v1, const Point& v2, const Point& v3, const float distance, const int type = 0):
         distance(distance),
         type(type) {
         auto vec_1 = v2 - v1;
@@ -39,25 +41,10 @@ public:
     }
 
 
-    // Intersections
-    bool Intersect(const Plane& other, ParametricLine& out) const {
-        return IntersectPlanePlane(*this, other, out);
-    }
 
-    ParametricLine operator&(const Plane& other) const {
-        ParametricLine out(Versor{}, Point{});
-        IntersectPlanePlane(*this, other, out);
-        return out;
-    }
-
-    bool Intersect(const ParametricLine& line, Point& out) const {
-        return IntersectPlaneLine(*this, line, out);
-    }
-
-    Point operator&(const ParametricLine& other) const {
-        Point out{};
-        IntersectPlaneLine(*this, other, out);
-        return out;
+    friend std::ostream& operator<<(std::ostream& op, const Plane& plane) {
+        op << "<Plane|Normal: " << plane.normal << "|Distance: " << plane.distance << ">";
+        return op;
     }
 };
 

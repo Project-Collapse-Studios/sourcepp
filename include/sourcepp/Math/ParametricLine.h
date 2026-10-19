@@ -17,6 +17,8 @@ public:
         this->dir.norm();
     }
 
+    ParametricLine() = default;
+
     /// Get the direction versor of this line.
     [[nodiscard]] const Versor& GetDir() const {
         return this->dir;
@@ -31,5 +33,8 @@ public:
         return this->dir * t + this->origin;
     }
 
-    // TODO: Add Intersect functions with Plane.h
+    friend std::ostream& operator<<(std::ostream& op, const ParametricLine& line) {
+        op << "<PLine|Dir: " << line.dir << "|Point: " << line.origin << ">";
+        return op;
+    }
 };
