@@ -24,12 +24,12 @@ namespace mathpp {
 
         /// Create a plane using 3 points, distance and type = 0.
         /// The distance between those points doesn't matter, only their location as the direction vector gets normalized.
-        Plane(const Point& v1, const Point& v2, const Point& v3, const float distance, const int type = 0):
-            distance(distance),
+        Plane(const Point& v1, const Point& v2, const Point& v3, const int type = 0):
             type(type) {
             auto vec_1 = v2 - v1;
             auto vec_2 = v3 - v1;
             this->normal = vec_1.cross(vec_2); // We don't care about orientation
+            this->distance = this->normal.dot(v1);
             this->normal.norm();
         };
 
