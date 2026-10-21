@@ -1,0 +1,35 @@
+#include <sourcepp/vmfbsp/Material.h>
+
+Material::Material(const kvpp::KV1ElementReadable<>& kv) {
+    this->mat_file.emplace<1>(kv["material"].getValue());
+
+    using namespace sourcepp::string;
+    // UAxis
+    auto splits = split(kv["uaxis"].getValue(), ' ');
+    if (splits.size() < 5) { // If more, it will get ignored
+        throw std::exception("Invalid uaxis value!");
+    }
+    toFloatOmitInvalid(splits[0], this->u_axis_dir[0]);
+    toFloatOmitInvalid(splits[1], this->u_axis_dir[1]);
+    toFloatOmitInvalid(splits[2], this->u_axis_dir[2]);
+
+    toIntOmitInvalid(splits[3], this->u_offset);
+    toFloatOmitInvalid(splits[4], this->u_scale);
+
+    // VAxis
+    splits = split(kv["vaxis"].getValue(), ' ');
+    if (splits.size() < 5) { // If more, it will get ignored
+        throw std::exception("Invalid vaxis value!");
+    }
+    toFloatOmitInvalid(splits[0], this->v_axis_dir[0]);
+    toFloatOmitInvalid(splits[1], this->v_axis_dir[1]);
+    toFloatOmitInvalid(splits[2], this->v_axis_dir[2]);
+
+    toIntOmitInvalid(splits[3], this->v_offset);
+    toFloatOmitInvalid(splits[4], this->v_scale);
+
+    // Other
+    toFloat(kv["rotation"].getValue(), this->rotation);
+    toInt(kv["lightmapscale"].getValue(), this->lightmap_scale);
+    toInt(kv["smoothing_groups"].getValue(), this->smoothing_group);
+}
