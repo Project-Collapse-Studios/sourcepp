@@ -4,24 +4,20 @@
 
 namespace mathpp {
     class ParametricLine {
-        // Point = Versor * t + Point
-        using Versor = Vec3f;
         using Point = Vec3f;
 
-        Versor dir;
+        Vec3f dir;
         Point origin;
 
     public:
         ParametricLine(const Vec3f& dir_, const Point& origin_):
             dir(dir_),
-            origin(origin_) {
-            this->dir.norm();
-        }
+            origin(origin_) {}
 
         ParametricLine() = default;
 
         /// Get the direction versor of this line.
-        [[nodiscard]] const Versor& GetDir() const {
+        [[nodiscard]] const Vec3f& GetDir() const {
             return this->dir;
         }
 

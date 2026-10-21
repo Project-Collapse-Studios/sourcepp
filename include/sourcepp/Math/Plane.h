@@ -2,38 +2,34 @@
 
 #include <sourcepp/Math.h>
 
+
+
 namespace mathpp {
     class Plane {
-        using Versor = Vec3f;
         using Point = Vec3f;
 
         // normal.x * x + normal.y * y + normal.z * z = distance
-        Versor normal;
+        Vec3f normal;
         float distance = 0;
         int type = 0;
 
     public:
         /// Create a plane using a direction vector, distance and type = 0.
-        /// Direction vector gets normalized to a versor, distance gets accounted for.
         Plane(const Vec3f& normal, const float distance, const int type = 0):
             normal(normal),
             distance(distance),
-            type(type) {
-            this->distance /= this->normal.norm(); // If we normalize the vector we also need to account for the distance being different
-        };
+            type(type) {};
 
         /// Create a plane using 3 points, distance and type = 0.
-        /// The distance between those points doesn't matter, only their location as the direction vector gets normalized.
         Plane(const Point& v1, const Point& v2, const Point& v3, const int type = 0):
             type(type) {
             auto vec_1 = v2 - v1;
             auto vec_2 = v3 - v1;
             this->normal = vec_1.cross(vec_2); // We don't care about orientation
             this->distance = this->normal.dot(v1);
-            this->normal.norm();
         };
 
-        [[nodiscard]] Versor GetNormal() const {
+        [[nodiscard]] Vec3f GetNormal() const {
             return this->normal;
         }
 
