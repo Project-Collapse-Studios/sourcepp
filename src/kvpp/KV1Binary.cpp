@@ -223,7 +223,7 @@ KV1Binary::KV1Binary(std::span<const std::byte> kv1Data, bool use64BitPointers)
 					break;
 				}
 				case COLOR_RGBA: {
-					math::Vec4ui8 value;
+					mathpp::Vec4ui8 value;
 					value[0] = stream.read<uint8_t>();
 					value[1] = stream.read<uint8_t>();
 					value[2] = stream.read<uint8_t>();
@@ -290,7 +290,7 @@ std::vector<std::byte> KV1Binary::bake() const {
 					break;
 				}
 				case COLOR_RGBA: {
-					const auto val = *element.getValue<math::Vec4ui8>();
+					const auto val = *element.getValue<mathpp::Vec4ui8>();
 					stream << val[0] << val[1] << val[2] << val[3];
 					break;
 				}
@@ -344,7 +344,7 @@ std::string KV1Binary::bakeText() const {
 				break;
 			}
 			case COLOR_RGBA: {
-				const auto val = *element.getValue<math::Vec4ui8>();
+				const auto val = *element.getValue<mathpp::Vec4ui8>();
 				child = std::format("{} {} {} {}", val[0], val[1], val[2], val[3]);
 				break;
 			}
