@@ -84,6 +84,18 @@ std::from_chars_result toInt(std::string_view number, std::integral auto& out, i
 	return std::from_chars(number.data(), number.data() + number.size(), out, base);
 }
 
+std::from_chars_result toIntOmitInvalid(std::string_view number, std::integral auto& out) {
+	std::string clean;
+	// TODO: Implement bases other than 10
+	for (auto& ch : number) {
+		if (isdigit(ch) || ch == '-' || ch == '+') {
+			clean += ch;
+		}
+	}
+
+	return std::from_chars(clean.data(), clean.data() + clean.size(), out);
+}
+
 std::from_chars_result toFloat(std::string_view number, std::floating_point auto& out) {
 #ifdef __APPLE__
 	// Piece of shit compiler
@@ -91,6 +103,24 @@ std::from_chars_result toFloat(std::string_view number, std::floating_point auto
 	return {number.data(), {}};
 #else
 	return std::from_chars(number.data(), number.data() + number.size(), out);
+#endif
+}
+
+/// Converts string to float, whilst discarding any invalid char inside of it.
+std::from_chars_result toFloatOmitInvalid(const std::string_view& number, std::floating_point auto& out) {
+	std::string clean;
+	for (auto& ch : number) {
+		if (isdigit(ch) || ch == '.' || ch == '-' || ch == '+') {
+			clean += ch;
+		}
+	}
+
+#ifdef __APPLE__
+	// Piece of shit compiler
+	out = std::stof(std::string{clean});
+	return {clean.data(), {}};
+#else
+	return std::from_chars(clean.data(), clean.data() + clean.size(), out);
 #endif
 }
 
