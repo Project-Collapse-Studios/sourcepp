@@ -16,6 +16,7 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
 
     // Check if our values don't have children of chlidren
     for (const auto &value: this->keyvalues) {
+        if (value.getKey() == "connections") {continue;}
         if (value.getChildCount()) {
             throw std::invalid_argument("Key values must be flat! (Have no children)");
         }
@@ -47,6 +48,13 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
         this->keyvalues.removeChild("origin");
     } else {
         this->origin = Vec3f(0.f, 0.f, 0.f);
+    }
+
+    if (this->keyvalues.hasChild("connections")) {
+        for (auto& connections = this->keyvalues["connections"]; auto& connection : connections) {
+            this->outputs.emplace_back(connection);
+        }
+        this->keyvalues.removeChild("connections");
     }
 }
 
