@@ -1,6 +1,6 @@
 #include <sourcepp/vmfbsp/BrushFace.h>
 
-BrushFace::BrushFace(const kvpp::KV1ElementReadable<>& kv) {
+BrushFace::BrushFace(const kvpp::KV1ElementReadable<>& kv) : Material(kv) {
     this->id = kv["id"].getValue<int>();
 
     // Plane
@@ -20,8 +20,5 @@ BrushFace::BrushFace(const kvpp::KV1ElementReadable<>& kv) {
     toFloatOmitInvalid(splits[6], p3[0]);
     toFloatOmitInvalid(splits[7], p3[1]);
     toFloatOmitInvalid(splits[8], p3[2]);
-    this->plane = Plane(p1, p2, p3);
-
-    // Material
-    this->material = Material(kv); // Parsing is done in that class
+    this->Plane_From3Points(p1, p2, p3);
 }

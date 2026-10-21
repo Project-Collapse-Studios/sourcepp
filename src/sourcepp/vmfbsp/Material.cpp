@@ -1,7 +1,9 @@
 #include <sourcepp/vmfbsp/Material.h>
+#include <iostream>
+
 
 Material::Material(const kvpp::KV1ElementReadable<>& kv) {
-    this->mat_file.emplace<1>(kv["material"].getValue());
+    this->mat_file.emplace<1>(kv["material"].getValue<std::string_view>());
 
     using namespace sourcepp::string;
     // UAxis

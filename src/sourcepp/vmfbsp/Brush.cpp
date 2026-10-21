@@ -12,6 +12,6 @@ Brush::Brush(const kvpp::KV1ElementReadable<>& kv) {
     }
 
     for (unsigned int i = 0; i < side_num; ++i) {
-        this->sides[i] = BrushFace(kv("side", i));
+        this->sides.emplace_back(kv("side", i));
     }
 }

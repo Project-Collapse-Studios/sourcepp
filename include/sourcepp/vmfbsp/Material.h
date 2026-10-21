@@ -23,5 +23,6 @@ class Material {
     unsigned short smoothing_group = 0;
 
 public:
+    Material() = default;
     explicit Material(const kvpp::KV1ElementReadable<>& kv);
 };
