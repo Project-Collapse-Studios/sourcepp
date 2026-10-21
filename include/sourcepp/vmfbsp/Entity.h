@@ -110,7 +110,7 @@ public:
         }
 
         /// Add an output to this entity.
-        void AddOutput(const Output pOut) { // We want a copy, to claim ownership of the output.
+        void AddOutput(const Output& pOut) { // We want a copy, to claim ownership of the output.
             this->outputs.push_back(pOut);
         }
 
