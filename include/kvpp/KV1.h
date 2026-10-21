@@ -760,5 +760,8 @@ inline KV1Writer<> operator""_kv1w(const char* str, const std::size_t len) {
 
 } // namespace literals
 
+template<typename V>
+concept AnyKV1Element = std::same_as<V, KV1ElementReadable<>> ||
+						std::same_as<V, KV1ElementWritable<>>;
 
 } // namespace kvpp
