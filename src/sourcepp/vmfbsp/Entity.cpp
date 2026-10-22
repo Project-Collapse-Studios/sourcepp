@@ -37,7 +37,7 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
     }
 
     if (this->keyvalues.hasChild("angles")) {
-        this->angles = this->keyvalues["origin"].getValue<EulerAngles>();
+        this->angles = this->keyvalues["angles"].getValue<EulerAngles>();
         this->keyvalues.removeChild("angles");
     } else {
         this->angles = EulerAngles(0.f, 0.f, 0.f);
