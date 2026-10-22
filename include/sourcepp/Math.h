@@ -31,7 +31,7 @@ constexpr auto pi_f32  = pi<float>;
 constexpr auto pi_f64  = pi<double>;
 
 template<typename T>
-concept Arithmetic = std::is_arithmetic_v<T> || std::same_as<T, half>;
+concept Arithmetic = std::is_arithmetic_v<T>  || std::is_unsigned_v<T> || std::same_as<T, half>;
 
 template<Arithmetic T>
 [[nodiscard]] constexpr T remap(T value, T l1, T h1, T l2, T h2) {
