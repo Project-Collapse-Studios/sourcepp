@@ -124,6 +124,24 @@ std::from_chars_result toFloatOmitInvalid(const std::string_view& number, std::f
 #endif
 }
 
+template<mathpp::Arithmetic T>
+std::from_chars_result toNumber(const std::string_view& number, T val, bool omitInvalid = false)
+{
+    if constexpr (std::floating_point<T>)
+    {
+        if(omitInvalid)
+            return toFloatOmitInvalid(number, val);
+        return toFloat(number, val);
+    }
+    else
+    {
+        if(omitInvalid)
+            return toIntOmitInvalid(number, val);
+        return toInt(number, val);
+    }
+
+}
+
 [[nodiscard]] std::vector<std::byte> decodeHex(std::string_view hex);
 
 [[nodiscard]] std::string encodeHex(std::span<const std::byte> hex);

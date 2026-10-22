@@ -29,12 +29,29 @@ class KV1ElementWritable;
 
 template<typename V>
 concept KV1ValueType = std::convertible_to<V, std::string_view>
-                    || std::same_as<V, bool>
-                    || std::same_as<V, int32_t>
-                    || std::same_as<V, int64_t>
-                    || std::same_as<V, float>
-					|| std::same_as<V, mathpp::Vec3f>
-					|| std::same_as<V, mathpp::Vec4f>;
+                    || std::integral<V>
+                    || std::floating_point<V>
+                    || std::same_as<V, mathpp::Vec2i8>
+                    || std::same_as<V, mathpp::Vec2i16>
+                    || std::same_as<V, mathpp::Vec2i32>
+                    || std::same_as<V, mathpp::Vec2i64>
+                    || std::same_as<V, mathpp::Vec3i8>
+                    || std::same_as<V, mathpp::Vec3i16>
+                    || std::same_as<V, mathpp::Vec3i32>
+                    || std::same_as<V, mathpp::Vec3i64>
+                    || std::same_as<V, mathpp::Vec4i8>
+                    || std::same_as<V, mathpp::Vec4i16>
+                    || std::same_as<V, mathpp::Vec4i32>
+                    || std::same_as<V, mathpp::Vec4i64>
+                    || std::same_as<V, mathpp::Vec2f16>
+                    || std::same_as<V, mathpp::Vec2f32>
+                    || std::same_as<V, mathpp::Vec2f64>
+					|| std::same_as<V, mathpp::Vec3f16>
+                    || std::same_as<V, mathpp::Vec3f32>
+                    || std::same_as<V, mathpp::Vec3f64>
+					|| std::same_as<V, mathpp::Vec4f16>
+                    || std::same_as<V, mathpp::Vec4f32>
+                    || std::same_as<V, mathpp::Vec4f64>;
 
 template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
@@ -66,57 +83,79 @@ public:
 	}
 
 	/// Get the value associated with the element as the given type
+	/// Bool specifies if the conversion (when applicable) can be omit non number valid characters.
 	template<KV1ValueType V>
-	[[nodiscard]] V getValue() const {
+	[[nodiscard]] V getValue(bool omitInvalid = false) const {
 		if constexpr (std::convertible_to<V, std::string_view>) {
 			return this->value;
 		} else if constexpr (std::same_as<V, bool>) {
 			return static_cast<bool>(this->getValue<int32_t>());
-		} else if constexpr (std::same_as<V, int32_t> || std::same_as<V, int64_t>) {
-			V out = 0;
-			if (this->value.length() == 10 && this->value.starts_with("0x") && sourcepp::parser::text::isNumber(this->value.substr(2))) {
-				sourcepp::string::toInt(this->value.substr(2), out, 16);
-			} else {
-				sourcepp::string::toInt(this->value, out);
-			}
-			return out;
-		} else if constexpr (std::same_as<V, float>) {
-			float out = 0.f;
-			sourcepp::string::toFloat(this->value, out);
-			return out;
-		} else if constexpr (std::same_as<V, mathpp::Vec3f>) {
-			auto splits = sourcepp::string::split(this->value, ' ');
-			float x = 0, y = 0, z = 0;
-			if (splits.size() >= 1) {
-				sourcepp::string::toFloat(splits[0], x);
-			}
-			if (splits.size() >= 2) {
-				sourcepp::string::toFloat(splits[1], y);
-			}
-			if (splits.size() >= 3) {
-				sourcepp::string::toFloat(splits[2], z);
-			}
+		} else {
+            auto splits = sourcepp::string::split(this->value, ' ');
+            typedef typename std::conditional<std::floating_point<V>
+                    || std::same_as<V, mathpp::Vec2f16>
+                    || std::same_as<V, mathpp::Vec2f32>
+                    || std::same_as<V, mathpp::Vec2f64>
+                    || std::same_as<V, mathpp::Vec3f16>
+                    || std::same_as<V, mathpp::Vec3f32>
+                    || std::same_as<V, mathpp::Vec3f64>
+                    || std::same_as<V, mathpp::Vec4f16>
+                    || std::same_as<V, mathpp::Vec4f32>
+                    || std::same_as<V, mathpp::Vec4f64>, float, int>::type Number;
 
-			return mathpp::Vec3f(x, y, z);
-		} else if constexpr (std::same_as<V, mathpp::Vec4f>) {
-			float x = 0, y = 0, z = 0, t = 0;
-			auto splits = sourcepp::string::split(this->value, ' ');
-			if (splits.size() >= 1) {
-				sourcepp::string::toFloat(splits[0], x);
-			}
-			if (splits.size() >= 2) {
-				sourcepp::string::toFloat(splits[1], y);
-			}
-			if (splits.size() >= 3) {
-				sourcepp::string::toFloat(splits[2], z);
-			}
-			if (splits.size() >= 4) {
-				sourcepp::string::toFloat(splits[3], t);
-			}
-			return mathpp::Vec4f(x, y, z, t);
-		}
+            Number x = 0, y = 0, z = 0, t = 0;
+            sourcepp::string::toNumber<Number>(splits[0], x, omitInvalid);
+            if constexpr (std::same_as<V, float>
+            || std::same_as<V, int8_t>
+            || std::same_as<V, int16_t>
+            || std::same_as<V, int32_t>
+            || std::same_as<V, int64_t>)
+            {
+                return x;
+            }
+            sourcepp::string::toNumber<Number>(splits[0], y, omitInvalid);
+            if constexpr (std::same_as<V, mathpp::Vec2f>
+            || std::same_as<V, mathpp::Vec2i8>
+            || std::same_as<V, mathpp::Vec2i16>
+            || std::same_as<V, mathpp::Vec2i32>
+            || std::same_as<V, mathpp::Vec2i64>)
+            {
+                return {x, y};
+            }
+            sourcepp::string::toNumber<Number>(splits[0], z, omitInvalid);
+            if constexpr (std::same_as<V, mathpp::Vec3f>
+            || std::same_as<V, mathpp::Vec3i8>
+            || std::same_as<V, mathpp::Vec3i16>
+            || std::same_as<V, mathpp::Vec3i32>
+            || std::same_as<V, mathpp::Vec3i64>)
+            {
+                return {x, y, z};
+            }
+            sourcepp::string::toNumber<Number>(splits[0], z, omitInvalid);
+            if constexpr (std::same_as<V, mathpp::Vec4f>
+            || std::same_as<V, mathpp::Vec4i8>
+            || std::same_as<V, mathpp::Vec4i16>
+            || std::same_as<V, mathpp::Vec4i32>
+            || std::same_as<V, mathpp::Vec4i64>)
+            {
+                return {x, y, z, t};
+            }
+        }
 		return V{};
 	}
+
+    /// Get a vector of values from all children with the same name.
+    template<KV1ValueType V>
+    [[nodiscard]] std::vector<V> getAllValuesFromSameNameChildren(const std::string_view childKey, bool omitInvalid = false) const
+    {
+        std::vector<V> values;
+        for(int i = 0; i < this->getChildCount(childKey); i++)
+        {
+            const KV1ElementReadable& child = this->operator()(childKey,i);
+            values.push_back(child.getValue<V>(omitInvalid));
+        }
+        return values;
+    }
 
 	/// Get the conditional associated with the element
 	[[nodiscard]] std::string_view getConditional() const {
