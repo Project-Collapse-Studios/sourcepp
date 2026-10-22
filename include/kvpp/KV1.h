@@ -139,6 +139,18 @@ public:
 		return this->children;
 	}
 
+    /// Get the child elements of the element
+    [[nodiscard]] std::vector<const KV1ElementReadable*> getChildren(const std::string_view str) const {
+
+        std::vector<const KV1ElementReadable*> elements;
+        for(const KV1ElementReadable& element : this->children)
+            if(sourcepp::string::iequals(element.getKey(), str))
+            {
+                elements.push_back(const_cast<KV1ElementReadable*>(&element));
+            }
+        return elements;
+    }
+
 	using iterator = std::vector<KV1ElementReadable>::iterator;
 
 	[[nodiscard]] constexpr iterator begin() {
