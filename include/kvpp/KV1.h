@@ -34,10 +34,8 @@ struct is_math_vec<mathpp::Vec<S, P>> : std::true_type {};
 
 template<typename V>
 concept KV1ValueType = std::convertible_to<V, std::string_view>
-                    || std::same_as<V, bool>
-                    || std::same_as<V, int32_t>
-                    || std::same_as<V, int64_t>
-                    || std::same_as<V, float>
+                    || std::integral<V>
+                    || std::floating_point<V>
 					|| is_math_vec<V>::value;
 
 template<typename S = std::string_view>
@@ -74,20 +72,11 @@ public:
 	[[nodiscard]] V getValue() const {
 		if constexpr (std::convertible_to<V, std::string_view>) {
 			return this->value;
-		} else if constexpr (std::same_as<V, bool>) {
-			return static_cast<bool>(this->getValue<int32_t>());
-		} else if constexpr (std::same_as<V, int32_t> || std::same_as<V, int64_t>) {
-			V out = 0;
-			if (this->value.length() == 10 && this->value.starts_with("0x") && sourcepp::parser::text::isNumber(this->value.substr(2))) {
-				sourcepp::string::toInt(this->value.substr(2), out, 16);
-			} else {
-				sourcepp::string::toInt(this->value, out);
-			}
-			return out;
-		} else if constexpr (std::same_as<V, float>) {
-			float out = 0.f;
-			sourcepp::string::toFloat(this->value, out);
-			return out;
+		} else if constexpr (std::integral<V> || std::floating_point<V>)
+        {
+            V ret = 0;
+            sourcepp::string::toArithmetic<V>(this->value, ret);
+            return ret;
 		} else if constexpr (is_math_vec<V>::value) {
 			auto splits = sourcepp::string::split(this->value, ' ');
 			auto return_val = V{};
@@ -101,6 +90,23 @@ public:
 		}
 		return V{};
 	}
+
+    /// Retrieve n values from children with the same key in a vector (n = -1 for all values)
+    template<KV1ValueType V>
+    [[nodiscard]] std::vector<V> getChildrenValues(const std::string_view childKey, int n = -1) const
+    {
+        int count = this->getChildCount(childKey);
+
+        if(n > -1 && n < count) { count = n; }
+
+        std::vector<V> values;
+        for(int i = 0; i < count; i++)
+        {
+            const KV1ElementReadable& child = this->operator()(childKey,i);
+            values.push_back(child.getValue<V>());
+        }
+        return values;
+    }
 
 	/// Get the conditional associated with the element
 	[[nodiscard]] std::string_view getConditional() const {
@@ -132,6 +138,18 @@ public:
 	[[nodiscard]] const std::vector<KV1ElementReadable>& getChildren() const {
 		return this->children;
 	}
+
+    /// Get the child elements of the element
+    [[nodiscard]] std::vector<const KV1ElementReadable*> getChildren(const std::string_view str) const {
+
+        std::vector<const KV1ElementReadable*> elements;
+        for(const KV1ElementReadable& element : this->children)
+            if(sourcepp::string::iequals(element.getKey(), str))
+            {
+                elements.push_back(const_cast<KV1ElementReadable*>(&element));
+            }
+        return elements;
+    }
 
 	using iterator = std::vector<KV1ElementReadable>::iterator;
 
