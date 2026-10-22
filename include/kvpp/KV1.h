@@ -26,6 +26,11 @@ requires std::convertible_to<S, std::string_view>
 class KV1ElementWritable;
 // END
 
+template <typename T>
+struct is_math_vec : std::false_type {};
+
+template<uint8_t S, mathpp::Arithmetic P>
+struct is_math_vec<mathpp::Vec<S, P>> : std::true_type {};
 
 template<typename V>
 concept KV1ValueType = std::convertible_to<V, std::string_view>
@@ -33,8 +38,7 @@ concept KV1ValueType = std::convertible_to<V, std::string_view>
                     || std::same_as<V, int32_t>
                     || std::same_as<V, int64_t>
                     || std::same_as<V, float>
-					|| std::same_as<V, mathpp::Vec3f>
-					|| std::same_as<V, mathpp::Vec4f>;
+					|| is_math_vec<V>::value;
 
 template<typename S = std::string_view>
 requires std::convertible_to<S, std::string_view>
@@ -84,36 +88,16 @@ public:
 			float out = 0.f;
 			sourcepp::string::toFloat(this->value, out);
 			return out;
-		} else if constexpr (std::same_as<V, mathpp::Vec3f>) {
+		} else if constexpr (is_math_vec<V>::value) {
 			auto splits = sourcepp::string::split(this->value, ' ');
-			float x = 0, y = 0, z = 0;
-			if (splits.size() >= 1) {
-				sourcepp::string::toFloat(splits[0], x);
+			auto return_val = V{};
+			for (uint8_t i = 0; i < return_val.S; ++i) {
+				if (i >= splits.size()) {
+					return_val.values[i] = 0;
+				}
+				sourcepp::string::toArithmetic<typename V::value_type>(this->value, return_val.values[i]);
 			}
-			if (splits.size() >= 2) {
-				sourcepp::string::toFloat(splits[1], y);
-			}
-			if (splits.size() >= 3) {
-				sourcepp::string::toFloat(splits[2], z);
-			}
-
-			return mathpp::Vec3f(x, y, z);
-		} else if constexpr (std::same_as<V, mathpp::Vec4f>) {
-			float x = 0, y = 0, z = 0, t = 0;
-			auto splits = sourcepp::string::split(this->value, ' ');
-			if (splits.size() >= 1) {
-				sourcepp::string::toFloat(splits[0], x);
-			}
-			if (splits.size() >= 2) {
-				sourcepp::string::toFloat(splits[1], y);
-			}
-			if (splits.size() >= 3) {
-				sourcepp::string::toFloat(splits[2], z);
-			}
-			if (splits.size() >= 4) {
-				sourcepp::string::toFloat(splits[3], t);
-			}
-			return mathpp::Vec4f(x, y, z, t);
+			return return_val;
 		}
 		return V{};
 	}
@@ -384,20 +368,16 @@ public:
 			float out = 0.f;
 			sourcepp::string::toFloat(this->value, out);
 			return out;
-		} else if constexpr (std::same_as<V, mathpp::Vec3f>) {
+		}  else if constexpr (is_math_vec<V>::value) {
 			auto splits = sourcepp::string::split(this->value, ' ');
-			float x = 0, y = 0, z = 0;
-			if (splits.size() >= 1) {
-				sourcepp::string::toFloat(splits[0], x);
+			auto return_val = V{};
+			for (uint8_t i = 0; i < return_val.S; ++i) {
+				if (i >= splits.size()) {
+					return_val.values[i] = 0;
+				}
+				sourcepp::string::toArithmetic<typename V::value_type>(splits[i], return_val.values[i]);
 			}
-			if (splits.size() >= 2) {
-				sourcepp::string::toFloat(splits[1], y);
-			}
-			if (splits.size() >= 3) {
-				sourcepp::string::toFloat(splits[2], z);
-			}
-
-			return mathpp::Vec3f(x, y, z);
+			return return_val;
 		}
 		return V{};
 	}
