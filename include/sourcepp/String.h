@@ -126,7 +126,11 @@ std::from_chars_result toFloatOmitInvalid(const std::string_view& number, std::f
 
 template<mathpp::Arithmetic P>
 std::from_chars_result toArithmetic(const std::string_view& number, P& out) {
-	return std::from_chars(number.data(), number.data() + number.size(), out);
+	if constexpr (std::same_as<P, bool>) {
+		return toBool(number, out);
+	} else {
+		return std::from_chars(number.data(), number.data() + number.size(), out);
+	}
 }
 
 [[nodiscard]] std::vector<std::byte> decodeHex(std::string_view hex);

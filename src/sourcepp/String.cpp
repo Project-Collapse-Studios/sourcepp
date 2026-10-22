@@ -245,6 +245,14 @@ void string::denormalizeSlashes(std::string& path, bool stripSlashPrefix, bool s
 }
 
 std::from_chars_result string::toBool(std::string_view number, bool& out, int base) {
+	if (iequals(number, "true")) {
+		out = true;
+		return {.ptr = nullptr};
+	}
+	if (iequals(number, "false")) {
+		out = false;
+		return {.ptr = nullptr};
+	}
 	uint8_t tmp;
 	const auto result = std::from_chars(number.data(), number.data() + number.size(), tmp, base);
 	out = tmp;
