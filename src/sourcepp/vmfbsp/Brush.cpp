@@ -1,4 +1,5 @@
 #include <sourcepp/vmfbsp/Brush.h>
+#include <unordered_set>
 
 Brush::Brush(const kvpp::KV1ElementReadable<>& kv) {
     this->id = kv["id"].getValue<int>();
@@ -11,7 +12,7 @@ Brush::Brush(const kvpp::KV1ElementReadable<>& kv) {
         throw std::underflow_error("No defined brush faces on brush id: " + std::to_string(this->id));
     }
 
-    for (unsigned int i = 0; i < side_num; ++i) {
-        this->sides.emplace_back(kv("side", i));
+    for (auto side : kv.getChildren("side")) {
+        this->sides.emplace_back(*side);
     }
 }

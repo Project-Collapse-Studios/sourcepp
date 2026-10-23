@@ -27,3 +27,7 @@ sourcepp::string::StringReference sourcepp::string::StringReference::newStringRe
     size_t end = backing->length();
     return {start,end,backing};
 }
+
+bool sourcepp::string::StringReference::isValid() const {
+    return this->valid;
+}

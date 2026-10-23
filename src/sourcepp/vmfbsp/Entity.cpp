@@ -30,7 +30,7 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
     this->keyvalues.removeChild("classname");
 
     if (this->keyvalues.hasChild("spawnflags")) {
-        this->spawnflags = this->keyvalues["spawnflags"].getValue<int>(); // Cast onto unsigned.
+        this->spawnflags = this->keyvalues["spawnflags"].getValue<unsigned int>();
         this->keyvalues.removeChild("spawnflags");
     } else {
         this->spawnflags = 0;

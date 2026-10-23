@@ -31,7 +31,7 @@ Material::Material(const kvpp::KV1ElementReadable<>& kv) {
     toFloatOmitInvalid(splits[4], this->v_scale);
 
     // Other
-    toFloat(kv["rotation"].getValue(), this->rotation);
-    toInt(kv["lightmapscale"].getValue(), this->lightmap_scale);
-    toInt(kv["smoothing_groups"].getValue(), this->smoothing_group);
+    this->rotation = kv["rotation"].getValue<float>();
+    this->lightmap_scale = kv["lightmapscale"].getValue<int>();
+    this->smoothing_group = kv["smoothing_groups"].getValue<int>();
 }

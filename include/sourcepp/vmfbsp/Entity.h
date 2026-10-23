@@ -4,6 +4,7 @@
 #include <sourcepp/Math.h>
 #include <kvpp/KV1.h>
 #include "Output.h"
+#include "Brush.h"
 
 #ifdef Use_STRINGVIEW
 using key_base = std::string_view;
@@ -131,6 +132,7 @@ public:
         mathpp::Vec3f origin;
         mathpp::EulerAngles angles;
         std::vector<Output> outputs;
+        std::vector<Brush> brushes;
         unsigned int spawnflags;
 
         // Constructors:
