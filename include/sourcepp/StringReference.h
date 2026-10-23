@@ -1,9 +1,47 @@
 #pragma once
 #include <string>
+#include <unordered_set>
 
 
 namespace sourcepp::string {
 
+    template<typename T>
+    struct StringReferenceCompare
+    {
+        using is_transparent = std::true_type;
+
+        bool operator()(const std::string_view& view, const T& ref ) const { return view == ref; };
+        bool operator()(const T& ref, const std::string& view ) const { return view == ref; };
+        bool operator()(const T& ref, const char* view ) const { return view == ref; };
+        bool operator()(const T& ref, const T& ref2 ) const { return ref == ref2; };
+    };
+
+    template<typename T>
+    struct StringReferenceHash
+    {
+        using is_transparent = std::true_type;
+
+        std::size_t operator()(const T& ref) const noexcept
+        {
+            return std::hash<std::string_view>{}(ref.getStringView());
+        }
+
+        std::size_t operator()(const char* ref) const noexcept
+        {
+            return std::hash<const char*>{}(ref);
+        }
+
+        std::size_t operator()(const std::string & ref) const noexcept
+        {
+            return std::hash<std::string>{}(ref);
+        }
+
+        std::size_t operator()(const std::string_view & ref) const noexcept
+        {
+            return std::hash<std::string_view>{}(ref);
+        }
+    };
+    
     class StringReference {
         bool valid = false;
         size_t start = 0;
@@ -14,22 +52,6 @@ namespace sourcepp::string {
         StringReference() : valid(false), reference(nullptr), start(-1), end(-1) {};
 
         StringReference(size_t start, size_t end, std::string *ref) : start(start), end(end), reference(ref), valid(true) {}
-
-        StringReference(const StringReference& other)
-        {
-            this->valid = other.valid;
-            this->reference = other.reference;
-            this->end = other.end;
-            this->start = other.start;
-        }
-
-        StringReference(const StringReference&& other) noexcept
-        {
-            this->valid = other.valid;
-            this->reference = other.reference;
-            this->end = other.end;
-            this->start = other.start;
-        }
 
         [[nodiscard]] std::string_view getStringView() const;
 
@@ -91,42 +113,7 @@ namespace sourcepp::string {
            return this->isValid();
         }
 
-        static StringReference newStringReference(std::string_view str, std::string *backing);
+        static StringReference newStringReference(std::string_view str, std::string *backing, std::unordered_set<StringReference, StringReferenceHash<StringReference>, StringReferenceCompare<StringReference>> set = std::unordered_set<StringReference, StringReferenceHash<StringReference>, StringReferenceCompare<StringReference>>{});
 
-    };
-
-    struct StringReferenceCompare
-    {
-        using is_transparent = std::true_type;
-
-        bool operator()(const std::string_view& view, const StringReference& ref ) const { return view == ref; };
-        bool operator()(const StringReference& ref, const std::string& view ) const { return view == ref; };
-        bool operator()(const StringReference& ref, const char* view ) const { return view == ref; };
-        bool operator()(const StringReference& ref, const StringReference& ref2 ) const { return ref == ref2; };
-    };
-
-    struct StringReferenceHash
-    {
-        using is_transparent = std::true_type;
-
-        std::size_t operator()(const StringReference& ref) const noexcept
-        {
-            return std::hash<std::string_view>{}(ref.getStringView());
-        }
-
-        std::size_t operator()(const char* ref) const noexcept
-        {
-            return std::hash<const char*>{}(ref);
-        }
-
-        std::size_t operator()(const std::string & ref) const noexcept
-        {
-            return std::hash<std::string>{}(ref);
-        }
-
-        std::size_t operator()(const std::string_view & ref) const noexcept
-        {
-            return std::hash<std::string_view>{}(ref);
-        }
     };
 };

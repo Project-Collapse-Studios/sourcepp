@@ -1,4 +1,5 @@
 #include <sourcepp/StringReference.h>
+#include <unordered_set>
 
 
 std::string_view sourcepp::string::StringReference::getStringView() const
@@ -14,12 +15,12 @@ std::string sourcepp::string::StringReference::getString() const {
     return std::string(this->getStringView());
 }
 
-sourcepp::string::StringReference sourcepp::string::StringReference::newStringReference(std::string_view str, std::string* backing) {
+sourcepp::string::StringReference sourcepp::string::StringReference::newStringReference(std::string_view str, std::string* backing, std::unordered_set<StringReference, StringReferenceHash<StringReference>, StringReferenceCompare<StringReference>> set) {
 
-    auto substr = backing->find(str);
-    if(substr != std::string::npos)
+
+    if(set.contains(str))
     {
-        return {substr, substr + str.length(),backing};
+        return *set.find(str);
     }
 
     size_t start = backing->length();
