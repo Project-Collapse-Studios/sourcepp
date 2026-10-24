@@ -44,6 +44,13 @@ namespace sourcepp::string {
 
         friend string_reference_manager;
 
+        // BEGIN PUBLIC INTERFACE
+    public:
+        operator std::string() const {
+            return this->our_representation->buffer->substr(this->our_representation->start, this->our_representation->len);
+        }
+
+        // TODO: Add operator overloads for operator=() and others.
     };
 
 
