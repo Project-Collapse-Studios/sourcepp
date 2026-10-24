@@ -4,116 +4,82 @@
 
 
 namespace sourcepp::string {
+    class string_reference_manager;
 
-    template<typename T>
-    struct StringReferenceCompare
-    {
-        using is_transparent = std::true_type;
+    /// This is just a pointer wrapper
+    class string_reference {
 
-        bool operator()(const std::string_view& view, const T& ref ) const { return view == ref; };
-        bool operator()(const T& ref, const std::string& view ) const { return view == ref; };
-        bool operator()(const T& ref, const char* view ) const { return view == ref; };
-        bool operator()(const T& ref, const T& ref2 ) const { return ref == ref2; };
+        /// A representation of this string_reference that lives inside the set
+        class str_ref_repr {
+        public:
+            std::string* buffer = nullptr; // The buffer we store our data in
+            string_reference_manager* manager = nullptr; // The manager we belong to
+            size_t start = 0; // The starting character's index belonging to our string
+            size_t len = 0; // End char index + 1
+
+            /// Stores the amount of string_reference that reference us.
+            size_t reference_count = 0;
+
+            bool operator==(const str_ref_repr& other) const {
+                return  this->buffer == other.buffer &&
+                        this->start == other.start &&
+                        this->len == other.len;
+            }
+
+            /// Decreases the reference count, and if it drops to 0 calls to the manager to delete this object.
+            void decrease_ref();
+        };
+
+        str_ref_repr* our_representation = nullptr;
+
+        explicit string_reference(str_ref_repr* reference) {
+            this->our_representation = reference;
+            ++this->our_representation->reference_count; // We start to reference it
+        };
+        ~string_reference() {
+            this->our_representation->decrease_ref(); // This can possibly cause a chain reaction that will lead to str_ref_repr being deleted from memory.
+        };
+
+
+
+        friend string_reference_manager;
+
     };
 
-    template<typename T>
-    struct StringReferenceHash
-    {
-        using is_transparent = std::true_type;
 
-        std::size_t operator()(const T& ref) const noexcept
-        {
-            return std::hash<std::string_view>{}(ref.getStringView());
-        }
+    class string_reference_manager {
 
-        std::size_t operator()(const char* ref) const noexcept
-        {
-            return std::hash<const char*>{}(ref);
-        }
+        /// Used for hashing
+        struct str_ref_hash {
+            using is_transparent = std::true_type;
 
-        std::size_t operator()(const std::string & ref) const noexcept
-        {
-            return std::hash<std::string>{}(ref);
-        }
+            /// Hashing function, custom made to only read the buffer and not compare the actual object
+            std::size_t operator()(const string_reference::str_ref_repr* ref) const noexcept;
+        };
 
-        std::size_t operator()(const std::string_view & ref) const noexcept
-        {
-            return std::hash<std::string_view>{}(ref);
+        std::unordered_set<string_reference::str_ref_repr*, str_ref_hash> set;
+        /// Manager has exclusive ownership of buffer. No operations from outside are allowed.
+        std::unique_ptr<std::string> buffer_ptr;
+
+        friend string_reference::str_ref_repr;
+        void RemoveRepresentation(string_reference::str_ref_repr* repr) {
+            const auto it = this->set.find(repr);
+            this->set.erase(it);
+            delete repr;
         }
-    };
-    
-    class StringReference {
-        bool valid = false;
-        size_t start = 0;
-        size_t end = 0;
-        std::string *reference = nullptr;
 
     public:
-        StringReference() : valid(false), reference(nullptr), start(-1), end(-1) {};
-
-        StringReference(size_t start, size_t end, std::string *ref) : start(start), end(end), reference(ref), valid(true) {}
-
-        [[nodiscard]] std::string_view getStringView() const;
-
-        [[nodiscard]] std::string getString() const;
-
-        [[nodiscard]] bool isValid() const;
-
-        explicit operator std::string() const {
-            return this->getString();
+        /// Create the manager.
+        explicit string_reference_manager() {
+            this->buffer_ptr = std::make_unique<std::string>();
         }
 
-        explicit operator std::string_view() const {
-            return this->getStringView();
+        /// Create whilst passing a ready to be read buffer.
+        explicit string_reference_manager(std::unique_ptr<std::string> buffer) {
+            this->buffer_ptr = std::move(buffer);
         }
 
-        bool operator==(std::string_view str) const {
-            if (!this->isValid())
-                return false;
-            return str == this->getStringView();
-        }
-
-        bool operator==(const StringReference& ref) const {
-            if (!this->isValid() || !ref.isValid())
-                return false;
-            return ref.end == this->end && ref.start == this->start && ref.reference == this->reference;
-        }
-
-        bool operator==(const char* str) const
-        {
-            return this->getStringView() == str;
-        }
-
-        std::string_view operator()() const {
-            if (!this->isValid())
-                return {};
-            return this->getStringView();
-        }
-
-        std::string_view operator()(size_t s) const {
-            if (!this->isValid())
-                return {};
-            return this->getStringView().substr(s);
-        }
-
-        std::string_view operator()(size_t s, size_t n) const {
-            if (!this->isValid())
-                return {};
-            return this->getStringView().substr(s, n);
-        }
-
-        char operator[](size_t p) const {
-            if (!this->isValid())
-                return {};
-            return this->reference->at(p);
-        }
-
-        explicit operator bool() const
-        {
-           return this->isValid();
-        }
-
-        static StringReference newStringReference(std::string_view str, std::string *backing, std::unordered_set<StringReference, StringReferenceHash<StringReference>, StringReferenceCompare<StringReference>> set = std::unordered_set<StringReference, StringReferenceHash<StringReference>, StringReferenceCompare<StringReference>>{});
-
+        /// Request a string reference from us.
+        [[nodiscard]] string_reference request(std::string& str);
     };
-};
+}
