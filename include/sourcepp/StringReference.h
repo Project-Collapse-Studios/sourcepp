@@ -9,6 +9,8 @@ namespace sourcepp::string {
     /// This is just a pointer wrapper
     class string_reference {
 
+        string_reference() = delete;
+
         /// A representation of this string_reference that lives inside the set
         class str_ref_repr {
         public:
