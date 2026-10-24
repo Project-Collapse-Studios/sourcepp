@@ -67,24 +67,36 @@ public:
 		return this->value;
 	}
 
-	/// Get the value associated with the element as the given type
+	/// Get the value associated with the element as the given type.
+	/// Because source has different representations (especially for vectors),
+	/// robust parsing is there to make sure the values are read correctly.
+	/// It's slower, but when "casting" a string onto a requested value, it skips any invalid chars inside that string.
 	template<KV1ValueType V>
-	[[nodiscard]] V getValue() const {
+	[[nodiscard]] V getValue(const bool robust_parsing = false) const {
 		if constexpr (std::convertible_to<V, std::string_view>) {
 			return this->value;
 		} else if constexpr (std::integral<V> || std::floating_point<V>)
         {
             V ret = 0;
-            sourcepp::string::toArithmetic<V>(this->value, ret);
+			if (robust_parsing) {
+				sourcepp::string::toArithmeticRobust<V>(this->value, ret);
+			} else {
+				sourcepp::string::toArithmetic<V>(this->value, ret);
+			}
             return ret;
 		} else if constexpr (is_math_vec<V>::value) {
+
 			auto splits = sourcepp::string::split(this->value, ' ');
 			auto return_val = V{};
 			for (uint8_t i = 0; i < return_val.S; ++i) {
 				if (i >= splits.size()) {
 					return_val.values[i] = 0;
 				}
-				sourcepp::string::toArithmetic<typename V::value_type>(this->value, return_val.values[i]);
+				if (robust_parsing) {
+					sourcepp::string::toArithmeticRobust<typename V::value_type>(this->value, return_val.values[i]);
+				} else {
+					sourcepp::string::toArithmetic<typename V::value_type>(this->value, return_val.values[i]);
+				}
 			}
 			return return_val;
 		}

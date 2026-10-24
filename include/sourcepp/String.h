@@ -133,6 +133,31 @@ std::from_chars_result toArithmetic(const std::string_view& number, P& out) {
 	}
 }
 
+template<mathpp::Arithmetic P>
+std::from_chars_result toArithmeticRobust(const std::string_view& number, P& out) {
+	if constexpr (std::same_as<P, bool>) {
+		return toBool(number, out);
+	} else if constexpr (std::same_as<P, float>) {
+		std::string clean;
+		for (auto& ch : number) {
+			if (isdigit(ch) || ch == '-' || ch == '+' || ch == '.') {
+				clean += ch;
+			}
+		}
+		return std::from_chars(clean.data(), clean.data() + clean.size(), out);
+
+	} else if constexpr (std::is_integral_v<P>) {
+		std::string clean;
+		// TODO: Include a way to specify a base
+		for (auto& ch : number) {
+			if (isdigit(ch) || ch == '-' || ch == '+') {
+				clean += ch;
+			}
+		}
+		return std::from_chars(clean.data(), clean.data() + clean.size(), out);
+	}
+}
+
 [[nodiscard]] std::vector<std::byte> decodeHex(std::string_view hex);
 
 [[nodiscard]] std::string encodeHex(std::span<const std::byte> hex);
