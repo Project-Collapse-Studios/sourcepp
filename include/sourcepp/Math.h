@@ -583,3 +583,8 @@ SOURCEPP_MAT_DEFINE(4, 3);
 #undef SOURCEPP_MAT_DEFINE
 
 } // namespace mathpp
+
+namespace sourcepp::math
+{
+    using namespace mathpp;
+} // Backwards compat with older sourcepp libs/apps.
