@@ -120,7 +120,26 @@ public:
         return values;
     }
 
-	/// Get the conditional associated with the element
+    template<KV1ValueType V>
+    constexpr operator V () const
+    {
+        return this->getValue<V>();
+    }
+
+    template<KV1ValueType V>
+    constexpr operator std::vector<V> () const
+    {
+        std::vector<V> ret;
+
+        for(const auto & child : this->children) {
+            ret.emplace_back(child);
+        }
+
+        return ret;
+    }
+
+
+    /// Get the conditional associated with the element
 	[[nodiscard]] std::string_view getConditional() const {
 		return this->conditional;
 	}
