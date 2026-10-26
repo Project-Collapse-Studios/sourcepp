@@ -10,7 +10,7 @@ void string_reference::str_ref_repr::decrease_ref() {
 }
 
 template<string_alike V>
-string_reference& string_reference::operator=(const V& other) {
+string_reference& string_reference::operator=(const V& other) requires std::convertible_to<V, std::string> {
     const auto& ref = this->our_representation->manager->request(other);
     this->operator=(ref);
     return *this;

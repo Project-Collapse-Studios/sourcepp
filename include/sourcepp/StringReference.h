@@ -74,7 +74,7 @@ namespace sourcepp::string {
 
         /// Assign a string (creates a new string_reference), assigned to the same manager.
         template<string_alike V>
-        string_reference& operator=(const V& other);
+        string_reference& operator=(const V& other) requires std::convertible_to<V, std::string>;
 
 
         std::string::const_iterator begin() const {
