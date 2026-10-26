@@ -9,15 +9,13 @@ namespace sourcepp::string {
     /// This is just a pointer wrapper
     class string_reference {
 
-        string_reference() = delete;
-
         /// A representation of this string_reference that lives inside the set
         class str_ref_repr {
         public:
-            std::string* buffer = nullptr; // The buffer we store our data in
+            const std::string* buffer = nullptr; // The buffer we store our data in
             string_reference_manager* manager = nullptr; // The manager we belong to
             size_t start = 0; // The starting character's index belonging to our string
-            size_t len = 0; // End char index + 1
+            unsigned __int16 len = 0; // Length of the string
 
             /// Stores the amount of string_reference that reference us.
             size_t reference_count = 0;
@@ -38,6 +36,8 @@ namespace sourcepp::string {
             this->our_representation = reference;
             ++this->our_representation->reference_count; // We start to reference it
         };
+    public:
+        string_reference(); // Allow for the default constructor, but this won't create a valid string_reference!
         ~string_reference() {
             this->our_representation->decrease_ref(); // This can possibly cause a chain reaction that will lead to str_ref_repr being deleted from memory.
         };
@@ -49,6 +49,9 @@ namespace sourcepp::string {
         // BEGIN PUBLIC INTERFACE
     public:
         operator std::string() const {
+            if (this->our_representation->buffer == nullptr) {
+                return "";
+            }
             return this->our_representation->buffer->substr(this->our_representation->start, this->our_representation->len);
         }
 
@@ -89,6 +92,6 @@ namespace sourcepp::string {
         }
 
         /// Request a string reference from us.
-        [[nodiscard]] string_reference request(std::string& str);
+        [[nodiscard]] const string_reference& request(const std::string& str);
     };
 }

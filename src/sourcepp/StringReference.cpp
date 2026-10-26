@@ -20,12 +20,13 @@ std::size_t string_reference_manager::str_ref_hash::operator()(const string_refe
     return hash;
 }
 
-string_reference string_reference_manager::request(std::string& str) {
+const string_reference& string_reference_manager::request(const std::string& str) {
     auto out = new string_reference::str_ref_repr{};
     out->buffer = &str; // Temporarily set the passed string as the buffer. No writing is done.
     // If the hash turns out the same, this will fail the de-dupe check.
     out->start = 0;
     out->len = str.length();
+    out->manager = this;
     const auto it = this->set.find(out);
     if (it == this->set.end()) {
         // New string, we can already point it to our buffer
