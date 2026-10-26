@@ -9,6 +9,13 @@ void string_reference::str_ref_repr::decrease_ref() {
     }
 }
 
+template<string_alike V>
+string_reference& string_reference::operator=(const V& other) {
+    const auto& ref = this->our_representation->manager->request(other);
+    this->operator=(ref);
+    return *this;
+}
+
 std::size_t string_reference_manager::str_ref_hash::operator()(const string_reference::str_ref_repr* ref) const noexcept {
     // FNV-1a
     size_t hash = 14695981039346656037ull; // FNV offset basis

@@ -4,6 +4,11 @@
 
 
 namespace sourcepp::string {
+
+    template<typename V>
+    concept string_alike = std::convertible_to<V, std::string>;
+
+
     class string_reference_manager;
 
     /// This is just a pointer wrapper
@@ -48,6 +53,7 @@ namespace sourcepp::string {
 
         // BEGIN PUBLIC INTERFACE
     public:
+        // Conversions
         operator std::string() const {
             if (this->our_representation->buffer == nullptr) {
                 return "";
@@ -55,7 +61,41 @@ namespace sourcepp::string {
             return this->our_representation->buffer->substr(this->our_representation->start, this->our_representation->len);
         }
 
-        // TODO: Add operator overloads for operator=() and others.
+
+        // Operators
+
+        /// Assign other string_reference, may change the manager we belong to!
+        string_reference& operator=(const string_reference& other) {
+            this->our_representation->decrease_ref(); // Remember that we are not referencing them anymore
+            this->our_representation = other.our_representation;
+            ++this->our_representation->reference_count;
+            return *this;
+        }
+
+        /// Assign a string (creates a new string_reference), assigned to the same manager.
+        template<string_alike V>
+        string_reference& operator=(const V& other);
+
+
+        std::string::const_iterator begin() const {
+            return this->our_representation->buffer->begin() + this->our_representation->start;
+        }
+
+        std::string::const_iterator end() const {
+            return this->begin() + this->our_representation->len;
+        }
+
+        bool operator==(const string_reference& other) const {
+            return this->our_representation == other.our_representation; // Pointer comparison!
+        }
+
+        friend std::ostream& operator<<(std::ostream& op, const string_reference& obj) {
+            for (const char c : obj) {
+                op << c;
+            }
+            return op;
+        }
+
     };
 
 
