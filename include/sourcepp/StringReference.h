@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <unordered_set>
+#include <cstdint>
+#include <memory>
 
 
 namespace sourcepp::string {
@@ -20,7 +22,7 @@ namespace sourcepp::string {
             const std::string* buffer = nullptr; // The buffer we store our data in
             string_reference_manager* manager = nullptr; // The manager we belong to
             size_t start = 0; // The starting character's index belonging to our string
-            unsigned __int16 len = 0; // Length of the string
+            std::uint16_t len = 0; // Length of the string
 
             /// Stores the amount of string_reference that reference us.
             size_t reference_count = 0;
@@ -61,6 +63,10 @@ namespace sourcepp::string {
             return this->our_representation->buffer->substr(this->our_representation->start, this->our_representation->len);
         }
 
+        operator std::string_view() const
+        {
+            return {this->begin(), this->end()};
+        }
 
         // Operators
 
