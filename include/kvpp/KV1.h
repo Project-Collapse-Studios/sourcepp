@@ -2,8 +2,8 @@
 
 #include <concepts>
 #include <string>
-#include <string_view>
 #include <vector>
+#include <sourcepp/StringReference.h>
 
 #include <BufferStream.h>
 #include <sourcepp/parser/Text.h>
@@ -14,17 +14,12 @@
 #include <format>
 #include <sourcepp/FS.h>
 
+/// Defines conditions that allow us to compare the keys
+#define RequiresKeyComparison ((std::convertible_to<K, std::string_view> && std::convertible_to<KeyType, std::string_view>) || std::equality_comparable_with<K, KeyType>)
+/// Defines conditions that allow us to convert from V type to the type that's defined as the KeyType in KV1
+#define RequiresKeyConversion ((std::convertible_to<K, std::string_view> && std::same_as<KeyType, strref>) || std::convertible_to<K, KeyType>)
+
 namespace kvpp {
-
-// Definitions for KV1Writer
-template<typename S = std::string>
-requires std::convertible_to<S, std::string_view>
-class KV1Writer;
-
-template<typename S = std::string>
-requires std::convertible_to<S, std::string_view>
-class KV1ElementWritable;
-// END
 
 template <typename T>
 struct is_math_vec : std::false_type {};
@@ -33,378 +28,63 @@ template<uint8_t S, mathpp::Arithmetic P>
 struct is_math_vec<mathpp::Vec<S, P>> : std::true_type {};
 
 template<typename V>
-concept KV1ValueType = std::convertible_to<V, std::string_view>
+concept KV1ValueType = std::convertible_to<V, std::string>
                     || std::integral<V>
                     || std::floating_point<V>
 					|| is_math_vec<V>::value;
 
-template<typename S = std::string_view>
-requires std::convertible_to<S, std::string_view>
-class KV1ElementReadable {
-public:
 
-	/// Convert from KV1ElementWritable
-	explicit KV1ElementReadable(const KV1ElementWritable<S>& other) {
-		if (other.getChildCount()) {
-			for (auto element : other.getChildren()) {
-				this->children.push_back(KV1ElementReadable<S>(element));
-			}
-		} else {
-			this->value = other.getValue();
-			this->key = other.getKey();
-			this->conditional = other.getConditional();
-		}
+/// How the underlaying data is stored, this needs to be some sub-type of string.
+template<typename V>
+concept KV1UnderlayingValueType = std::same_as<V, stringpp::string_reference> ||
+								std::same_as<V, std::string>;
+
+/// All values are allowed as keys?
+template<typename V>
+concept KV1AllowedKeyTypes = std::same_as<V, stringpp::string_reference> ||
+							std::same_as<V, std::string>;
+
+/// Defines ways to compare the keys
+template<KV1AllowedKeyTypes T0, KV1AllowedKeyTypes T1>
+constexpr bool CompareKeys(const T0& key1, const T1& key2) {
+	if constexpr (std::is_convertible_v<T0, std::string_view> &&
+					std::is_convertible_v<T1, std::string_view>) {
+		return sourcepp::string::iequals(key1, key2);
+	} else {
+		return key1 == key2;
 	}
-
-
-	/// Get the key associated with the element
-	[[nodiscard]] std::string_view getKey() const {
-		return this->key;
-	}
-
-	/// Get the value associated with the element
-	[[nodiscard]] std::string_view getValue() const {
-		return this->value;
-	}
-
-	/// Get the value associated with the element as the given type.
-	/// Because source has different representations (especially for vectors),
-	/// robust parsing is there to make sure the values are read correctly.
-	/// It's slower, but when "casting" a string onto a requested value, it skips any invalid chars inside that string.
-	template<KV1ValueType V>
-	[[nodiscard]] V getValue(const bool robust_parsing = false) const {
-		if constexpr (std::convertible_to<V, std::string_view>) {
-			return this->value;
-		} else if constexpr (std::integral<V> || std::floating_point<V>)
-        {
-            V ret = 0;
-			if (robust_parsing) {
-				sourcepp::string::toArithmeticRobust<V>(this->value, ret);
-			} else {
-				sourcepp::string::toArithmetic<V>(this->value, ret);
-			}
-            return ret;
-		} else if constexpr (is_math_vec<V>::value) {
-
-			auto splits = sourcepp::string::split(this->value, ' ');
-			auto return_val = V{};
-			for (uint8_t i = 0; i < return_val.S; ++i) {
-				if (i >= splits.size()) {
-					return_val.values[i] = 0;
-				}
-				if (robust_parsing) {
-					sourcepp::string::toArithmeticRobust<typename V::value_type>(this->value, return_val.values[i]);
-				} else {
-					sourcepp::string::toArithmetic<typename V::value_type>(this->value, return_val.values[i]);
-				}
-			}
-			return return_val;
-		}
-		return V{};
-	}
-
-    /// Retrieve n values from children with the same key in a vector (n = -1 for all values)
-    template<KV1ValueType V>
-    [[nodiscard]] std::vector<V> getChildrenValues(const std::string_view childKey, int n = -1) const
-    {
-        int count = this->getChildCount(childKey);
-
-        if(n > -1 && n < count) { count = n; }
-
-        std::vector<V> values;
-        for(int i = 0; i < count; i++)
-        {
-            const KV1ElementReadable& child = this->operator()(childKey,i);
-            values.push_back(child.getValue<V>());
-        }
-        return values;
-    }
-
-    template<KV1ValueType V>
-    constexpr operator V () const
-    {
-        return this->getValue<V>();
-    }
-
-    template<KV1ValueType V>
-    constexpr operator std::vector<V> () const
-    {
-        std::vector<V> ret;
-
-        for(const auto & child : this->children) {
-            ret.emplace_back(child);
-        }
-
-        return ret;
-    }
-
-
-    /// Get the conditional associated with the element
-	[[nodiscard]] std::string_view getConditional() const {
-		return this->conditional;
-	}
-
-	/// Check if the element has one or more children with the given key
-	[[nodiscard]] bool hasChild(const std::string_view childKey) const {
-		return !this->operator[](childKey).isInvalid();
-	}
-
-	/// Get the number of child elements
-	[[nodiscard]] uint64_t getChildCount() const {
-		return this->children.size();
-	}
-
-	/// Get the number of child elements with the given key
-	[[nodiscard]] uint64_t getChildCount(const std::string_view childKey) const {
-		uint64_t count = 0;
-		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.key, childKey)) {
-				++count;
-			}
-		}
-		return count;
-	}
-
-	/// Get the child elements of the element
-	[[nodiscard]] const std::vector<KV1ElementReadable>& getChildren() const {
-		return this->children;
-	}
-
-    /// Get the child elements of the element
-    [[nodiscard]] std::vector<const KV1ElementReadable*> getChildren(const std::string_view str) const {
-
-        std::vector<const KV1ElementReadable*> elements;
-        for(const KV1ElementReadable& element : this->children)
-            if(sourcepp::string::iequals(element.getKey(), str))
-            {
-                elements.push_back(const_cast<KV1ElementReadable*>(&element));
-            }
-        return elements;
-    }
-
-	using iterator = std::vector<KV1ElementReadable>::iterator;
-
-	[[nodiscard]] constexpr iterator begin() {
-		return this->children.begin();
-	}
-
-	[[nodiscard]] constexpr iterator end() {
-		return this->children.end();
-	}
-
-	using const_iterator = std::vector<KV1ElementReadable>::const_iterator;
-
-	[[nodiscard]] constexpr const_iterator begin() const {
-		return this->children.begin();
-	}
-
-	[[nodiscard]] constexpr const_iterator end() const {
-		return this->children.end();
-	}
-
-	[[nodiscard]] constexpr const_iterator cbegin() const {
-		return this->children.cbegin();
-	}
-
-	[[nodiscard]] constexpr const_iterator cend() const {
-		return this->children.cend();
-	}
-
-	/// Get the child element of the element at the given index
-	[[nodiscard]] const KV1ElementReadable& operator[](unsigned int n) const {
-		return this->children.at(n);
-	}
-
-	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator[](const std::string_view childKey) const {
-		return this->operator()(childKey);
-	}
-
-	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator()(const std::string_view childKey) const {
-		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
-				return element;
-			}
-		}
-		return getInvalid();
-	}
-
-	/// Get the nth child element of the element with the given key
-	[[nodiscard]] const KV1ElementReadable& operator()(const std::string_view childKey, const unsigned int n) const {
-		unsigned int count = 0;
-		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
-				if (count == n) {
-					return element;
-				}
-				if (++count > n) {
-					break;
-				}
-			}
-		}
-		return getInvalid();
-	}
-
-	/// Check if the given element is invalid
-	[[nodiscard]] bool isInvalid() const {
-		return this == &getInvalid();
-	}
-
-	static const KV1ElementReadable& getInvalid() {
-		static KV1ElementReadable element;
-		return element;
-	}
-
-	[[nodiscard]] explicit operator bool() const {
-		return !this->isInvalid();
-	}
-
-protected:
-	KV1ElementReadable() = default;
-
-	static void read(BufferStreamReadOnly& stream, BufferStream& backing, std::vector<KV1ElementReadable>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) {
-		using namespace sourcepp;
-		while (true) {
-			// Check if the block is over
-			parser::text::eatWhitespaceAndSingleLineComments(stream);
-			if (stream.peek<char>() == '}') {
-				stream.skip();
-				break;
-			}
-			// Read key
-			{
-				elements.push_back(KV1ElementReadable{});
-				elements.back().key = parser::text::readStringToBuffer(stream, backing, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
-				parser::text::eatWhitespaceAndSingleLineComments(stream);
-			}
-			// Read value
-			if (stream.peek<char>() != '{') {
-				elements.back().value = parser::text::readStringToBuffer(stream, backing, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
-				parser::text::eatWhitespaceAndSingleLineComments(stream);
-			}
-			// Read conditional
-			if (stream.peek<char>() == '[') {
-				elements.back().conditional = parser::text::readStringToBuffer(stream, backing, "[", "]", escapeSequences);
-				parser::text::eatWhitespaceAndSingleLineComments(stream);
-			}
-			// Read block
-			if (stream.peek<char>() == '{') {
-				stream.skip();
-				parser::text::eatWhitespaceAndSingleLineComments(stream);
-				if (stream.peek<char>() != '}') {
-					KV1ElementReadable::read(stream, backing, elements.back().children, escapeSequences);
-				} else {
-					stream.skip();
-				}
-			}
-		}
-	}
-
-	S key = ""; // NOLINT(*-redundant-string-init)
-	S value = ""; // NOLINT(*-redundant-string-init)
-	S conditional = ""; // NOLINT(*-redundant-string-init)
-	std::vector<KV1ElementReadable> children;
-};
-
-template<typename S = std::string_view>
-requires std::convertible_to<S, std::string_view>
-class KV1 : public KV1ElementReadable<S> {
-public:
-	explicit KV1(std::string_view kv1Data, const bool useEscapeSequences_ = false)
-			: KV1ElementReadable<S>()
-			, useEscapeSequences(useEscapeSequences_) {
-		// Skip the UTF-8 BOM
-		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
-			kv1Data.remove_prefix(3);
-		}
-		if (kv1Data.empty()) {
-			return;
-		}
-		BufferStreamReadOnly stream{kv1Data};
-
-		// Multiply by 2 to ensure buffer will have enough space (very generous)
-		this->backingData.resize(kv1Data.size() * 2);
-		BufferStream backing{this->backingData, false};
-		try {
-			KV1ElementReadable<S>::read(stream, backing, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(this->useEscapeSequences));
-		} catch (const std::overflow_error&) {}
-	}
-
-	explicit KV1(const KV1ElementReadable<S>& kv1Data, const bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
-		this->children = kv1Data.getChildren();
-		this->key = kv1Data.getKey();
-	}
-
-
-	friend class KV1Writer<S>; // Befriend the class, but only of the same type
-
-	KV1(const KV1Writer<S>& other) {
-		this->useEscapeSequences = other.useEscapeSequences;
-		for (auto element : other.getChildren()) {
-			this->children.push_back(KV1ElementReadable<S>(element));
-		}
-	}
-
-
-protected:
-	using KV1ElementReadable<S>::getKey;
-	using KV1ElementReadable<S>::getValue;
-	using KV1ElementReadable<S>::getConditional;
-
-	std::string backingData;
-	bool useEscapeSequences;
-};
-
-namespace literals {
-
-inline KV1<> operator""_kv1(const char* str, const std::size_t len) {
-	return KV1{std::string_view{str, len}};
 }
 
-} // namespace literals
+template<KV1AllowedKeyTypes KeyType = stringpp::string_reference, KV1UnderlayingValueType ValueType = stringpp::string_reference>
+class KV1Element {
+	using strref = stringpp::string_reference;
 
-
-// KV1Writer
-template<typename S> // Default argument defined in KV1.h
-requires std::convertible_to<S, std::string_view>
-class KV1ElementWritable {
 public:
-	/// Allow to convert KV1ElementReadable onto us.
-	KV1ElementWritable(const KV1ElementReadable<S>& other) {
-		if (other.getChildCount()) {
-			for (auto element : other.getChildren()) {
-				this->children.push_back(KV1ElementWritable<S>(element));
-			}
-		} else {
-			this->value = other.getValue();
-			this->key = other.getKey();
-			this->conditional = other.getConditional();
-		}
-	}
-
 	/// Get the key associated with the element
-	[[nodiscard]] std::string_view getKey() const {
+	[[nodiscard]] KeyType getKey() const {
 		return this->key;
 	}
 
 	/// Set the key associated with the element
-	void setKey(std::string_view key_) {
+	template<KV1AllowedKeyTypes K = KeyType>
+	void setKey(K key_) requires RequiresKeyConversion {
 		this->key = key_;
 	}
 
 	/// Get the value associated with the element
-	[[nodiscard]] std::string_view getValue() const {
+	[[nodiscard]] ValueType getValue() const {
 		return this->value;
 	}
 
 	/// Get the value associated with the element as the given type
 	template<KV1ValueType V>
 	[[nodiscard]] V getValue() const {
-		if constexpr (std::convertible_to<V, std::string_view>) {
+		if constexpr (std::convertible_to<V, std::string>) {
 			return this->value;
 		} else if constexpr (std::same_as<V, bool>) {
-			return static_cast<bool>(this->getValue<int32_t>());
+			bool out;
+			sourcepp::string::toBool(this->value, out);
+			return out;
 		} else if constexpr (std::same_as<V, int32_t> || std::same_as<V, int64_t>) {
 			V out = 0;
 			if (this->value.length() == 10 && this->value.starts_with("0x") && sourcepp::parser::text::isNumber(this->value.substr(2))) {
@@ -434,46 +114,57 @@ public:
 	/// Set the value associated with the element
 	template<KV1ValueType V>
 	void setValue(V value_) {
-		if constexpr (std::convertible_to<V, std::string_view>) {
-			this->value = std::string_view{value_};
+		if constexpr (std::convertible_to<V, std::string>) {
+			this->value = std::string{value_}; // Strref automatically accounts for this.
 		} else if constexpr (std::same_as<V, bool>) {
 			this->setValue(std::format("{:b}", value_));
 		} else {
 			this->setValue(std::format("{}", value_));
 		}
+		// TODO: Add vector support here!
 	}
 
-	/// Set the value associated with the element
-	template<KV1ValueType V>
-	KV1ElementWritable& operator=(V value_) {
-		this->setValue(value_);
-		return *this;
-	}
 
 	/// Get the conditional associated with the element
-	[[nodiscard]] std::string_view getConditional() const {
+	[[nodiscard]] const std::string& getConditional() const {
 		return this->conditional;
 	}
 
 	/// Set the conditional associated with the element
-	void setConditional(std::string_view conditional_) {
+	void setConditional(const std::string& conditional_) {
 		this->conditional = conditional_;
 	}
 
 	/// Check if the element has one or more children with the given key
-	[[nodiscard]] bool hasChild(std::string_view childKey) const {
-		return !this->operator[](childKey).isInvalid();
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] bool hasChild(const K childKey) const requires RequiresKeyComparison {
+		for (const auto& el : *this) {
+			if (CompareKeys(el.key, childKey)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	// Add a new child element with the given key, with an optional value and/or conditional
-	template<KV1ValueType V = std::string_view>
-	KV1ElementWritable& addChild(std::string_view key_, V value_ = {}, std::string_view conditional_ = "") {
-		KV1ElementWritable elem;
+	/// Add a new child element with the given key, with an optional value
+	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
+	KV1Element& addChild(KeyType key_, V value_ = {}) requires RequiresKeyConversion {
+		this->children.emplace_back({});
+		KV1Element& elem = this->children.back();
+		elem.setKey(key_);
+		elem.setValue(value_);
+		return elem;
+	}
+
+	/// Add a new child element with the given key, with a value and conditional
+	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
+	KV1Element& addChild(KeyType key_, V value_, const std::string& conditional_) requires RequiresKeyConversion {
+		this->children.emplace_back({});
+		KV1Element& elem = this->children.back();
 		elem.setKey(key_);
 		elem.setValue(value_);
 		elem.setConditional(conditional_);
-		this->children.push_back(elem);
-		return this->children.back();
+		return elem;
 	}
 
 	/// Get the number of child elements
@@ -482,10 +173,11 @@ public:
 	}
 
 	/// Get the number of child elements with the given key
-	[[nodiscard]] uint64_t getChildCount(std::string_view childKey) const {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] uint64_t getChildCount(KeyType childKey) const requires RequiresKeyComparison {
 		uint64_t count = 0;
 		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.key, childKey)) {
+			if (CompareKeys(element.key, childKey)) {
 				++count;
 			}
 		}
@@ -493,16 +185,16 @@ public:
 	}
 
 	/// Get the child elements of the element
-	[[nodiscard]] const std::vector<KV1ElementWritable>& getChildren() const {
+	[[nodiscard]] const std::vector<KV1Element>& getChildren() const {
 		return this->children;
 	}
 
 	/// Get the child elements of the element
-	[[nodiscard]] std::vector<KV1ElementWritable>& getChildren() {
+	[[nodiscard]] std::vector<KV1Element>& getChildren() {
 		return this->children;
 	}
 
-	using iterator = std::vector<KV1ElementWritable>::iterator;
+	using iterator = std::vector<KV1Element>::iterator;
 
 	[[nodiscard]] constexpr iterator begin() {
 		return this->children.begin();
@@ -512,7 +204,7 @@ public:
 		return this->children.end();
 	}
 
-	using const_iterator = std::vector<KV1ElementWritable>::const_iterator;
+	using const_iterator = std::vector<KV1Element>::const_iterator;
 
 	[[nodiscard]] constexpr const_iterator begin() const {
 		return this->children.begin();
@@ -531,29 +223,32 @@ public:
 	}
 
 	/// Get the child element of the element at the given index
-	[[nodiscard]] const KV1ElementWritable& operator[](unsigned int n) const {
+	[[nodiscard]] const KV1Element& operator[](unsigned int n) const {
 		return this->children.at(n);
 	}
 
 	/// Get the child element of the element at the given index
-	[[nodiscard]] KV1ElementWritable& operator[](unsigned int n) {
+	[[nodiscard]] KV1Element& operator[](unsigned int n) {
 		return this->children.at(n);
 	}
 
 	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementWritable& operator[](std::string_view childKey) const {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] const KV1Element& operator[](K childKey) const requires RequiresKeyComparison {
 		return this->operator()(childKey);
 	}
 
 	/// Get the first child element of the element with the given key, or create a new element if it doesn't exist
-	[[nodiscard]] KV1ElementWritable& operator[](std::string_view childKey) {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] KV1Element& operator[](K childKey) requires RequiresKeyComparison {
 		return this->operator()(childKey);
 	}
 
 	/// Get the first child element of the element with the given key
-	[[nodiscard]] const KV1ElementWritable& operator()(std::string_view childKey) const {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] const KV1Element& operator()(K childKey) const requires RequiresKeyComparison {
 		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
+			if (CompareKeys(element.key, childKey)) {
 				return element;
 			}
 		}
@@ -561,9 +256,10 @@ public:
 	}
 
 	/// Get the first child element of the element with the given key, or create a new element if it doesn't exist
-	[[nodiscard]] KV1ElementWritable& operator()(std::string_view childKey) {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] KV1Element& operator()(K childKey) requires RequiresKeyComparison && RequiresKeyConversion {
 		for (auto& element : this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
+			if (CompareKeys(element.key, childKey)) {
 				return element;
 			}
 		}
@@ -571,10 +267,11 @@ public:
 	}
 
 	/// Get the nth child element of the element with the given key
-	[[nodiscard]] const KV1ElementWritable& operator()(std::string_view childKey, unsigned int n) const {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] const KV1Element& operator()(K childKey, unsigned int n) const requires RequiresKeyComparison && RequiresKeyConversion {
 		unsigned int count = 0;
 		for (const auto& element : this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
+			if (CompareKeys(element.key, childKey)) {
 				if (count == n) {
 					return element;
 				}
@@ -587,10 +284,11 @@ public:
 	}
 
 	/// Get the nth child element of the element with the given key, or create a new element if it doesn't exist
-	[[nodiscard]] KV1ElementWritable& operator()(std::string_view childKey, unsigned int n) {
+	template<KV1AllowedKeyTypes K = KeyType>
+	[[nodiscard]] KV1Element& operator()(std::string_view childKey, unsigned int n) requires RequiresKeyComparison && RequiresKeyConversion {
 		unsigned int count = 0;
 		for (auto& element: this->children) {
-			if (sourcepp::string::iequals(element.getKey(), childKey)) {
+			if (CompareKeys(element.key, childKey)) {
 				if (count == n) {
 					return element;
 				}
@@ -610,14 +308,15 @@ public:
 	}
 
 	/// Remove a child element from the element with the given key. -1 means all children with the given key
-	void removeChild(std::string_view childKey, int n = -1) {
+	template<KV1AllowedKeyTypes K = KeyType>
+	void removeChild(K childKey, int n = -1) requires RequiresKeyComparison {
 		if (n == 0) { return; }
 		unsigned int count = 0;
 
 		std::erase_if(this->children,
-			[&childKey, &count, n](const KV1ElementWritable& element) mutable noexcept -> bool {
+			[&childKey, &count, n](const KV1Element& element) mutable noexcept -> bool {
 				if (count > n && n != -1) { return false; }
-				bool result = sourcepp::string::iequals(element.getKey(), childKey);
+				bool result = CompareKeys(element.key, childKey);
 				if (result) { ++count; }
 				return result;
 			});
@@ -628,19 +327,31 @@ public:
 		return this == &getInvalid();
 	}
 
-	static const KV1ElementWritable& getInvalid() {
-		static KV1ElementWritable element;
+	static const KV1Element& getInvalid() {
+		static KV1Element element;
 		return element;
 	}
 
-	[[nodiscard]] explicit operator bool() const {
-		return !this->isInvalid();
-	}
+	//[[nodiscard]] explicit operator bool() const {
+	//	return !this->isInvalid();
+	//}
 
 protected:
-	KV1ElementWritable() = default;
+	KV1Element() = default;
+	explicit KV1Element(std::shared_ptr<stringpp::string_reference_manager> mgr)
+	requires std::same_as<KeyType, strref> || std::same_as<ValueType, strref>
+	: string_manager(mgr) {
+		// Make sure we set the manager
+		if constexpr (std::same_as<KeyType, strref>) {
+			this->key = mgr->request("");
+		}
+		if constexpr (std::same_as<ValueType, strref>) {
+			this->value = mgr->request("");
+		}
+	}
 
-	static void read(BufferStreamReadOnly& stream, std::vector<KV1ElementWritable>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) {
+	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
+			(!(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)) { // Cannot use this when we are using a strref to hold any data
 		using namespace sourcepp;
 		while (true) {
 			// Check if the block is over
@@ -651,7 +362,7 @@ protected:
 			}
 			// Read key
 			{
-				elements.push_back(KV1ElementWritable{});
+				elements.push_back(KV1Element{});
 				elements.back().key = parser::text::readString(stream, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
 				parser::text::eatWhitespaceAndSingleLineComments(stream);
 			}
@@ -670,7 +381,7 @@ protected:
 				stream.skip();
 				parser::text::eatWhitespaceAndSingleLineComments(stream);
 				if (stream.peek<char>() != '}') {
-					KV1ElementWritable::read(stream, elements.back().children, escapeSequences);
+					KV1Element::read(stream, elements.back().children, escapeSequences);
 				} else {
 					stream.skip();
 				}
@@ -678,7 +389,46 @@ protected:
 		}
 	}
 
-	static void write(BufferStream& stream, const std::vector<KV1ElementWritable>& elements, unsigned short indentLevel, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) {
+	static void read(std::shared_ptr<stringpp::string_reference_manager> mgr, BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
+		(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>) { // Used when we use strref
+		using namespace sourcepp;
+		while (true) {
+			// Check if the block is over
+			parser::text::eatWhitespaceAndSingleLineComments(stream);
+			if (stream.peek<char>() == '}') {
+				stream.skip();
+				break;
+			}
+			// Read key
+			{
+				elements.push_back(KV1Element{mgr});
+				elements.back().key = parser::text::readString(stream, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
+				parser::text::eatWhitespaceAndSingleLineComments(stream);
+			}
+			// Read value
+			if (stream.peek<char>() != '{') {
+				elements.back().value = parser::text::readString(stream, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
+				parser::text::eatWhitespaceAndSingleLineComments(stream);
+			}
+			// Read conditional
+			if (stream.peek<char>() == '[') {
+				elements.back().conditional = parser::text::readString(stream, "[", "]", escapeSequences);
+				parser::text::eatWhitespaceAndSingleLineComments(stream);
+			}
+			// Read block
+			if (stream.peek<char>() == '{') {
+				stream.skip();
+				parser::text::eatWhitespaceAndSingleLineComments(stream);
+				if (stream.peek<char>() != '}') {
+					KV1Element::read(mgr, stream, elements.back().children, escapeSequences);
+				} else {
+					stream.skip();
+				}
+			}
+		}
+		}
+
+	static void write(BufferStream& stream, const std::vector<KV1Element>& elements, unsigned short indentLevel, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) {
 		using namespace sourcepp;
 		constexpr auto writeIndentation = [](BufferStream& stream_, unsigned short indentLevel_) {
 			for (unsigned short i = 0; i < indentLevel_; i++) {
@@ -715,19 +465,34 @@ protected:
 		}
 	}
 
-	S key = ""; // NOLINT(*-redundant-string-init)
-	S value = ""; // NOLINT(*-redundant-string-init)
-	S conditional = ""; // NOLINT(*-redundant-string-init)
-	std::vector<KV1ElementWritable> children;
+	KeyType key; // NOLINT(*-redundant-string-init)
+	ValueType value; // NOLINT(*-redundant-string-init)
+	std::string conditional; // NOLINT(*-redundant-string-init)
+	std::vector<KV1Element> children;
+
+
+	struct empty {};
+	using needs_strref_mgr = std::conditional_t<std::is_same_v<KeyType, strref> || std::is_same_v<ValueType, strref>,
+	std::shared_ptr<stringpp::string_reference_manager>, empty>;
+#if defined(_MSC_VER) // Seriously????
+	[[msvc::no_unique_address]] needs_strref_mgr string_manager;
+#else
+	[[no_unique_address]] needs_strref_mgr string_manager;
+#endif
 };
 
-template<typename S> // Default defined in KV1.h
-requires std::convertible_to<S, std::string_view>
-class KV1Writer : public KV1ElementWritable<S> {
+template<KV1AllowedKeyTypes KeyType = stringpp::string_reference, KV1UnderlayingValueType ValueType = stringpp::string_reference>
+class KV1 : public KV1Element<KeyType, ValueType> {
+	using strref = stringpp::string_reference;
 public:
-	explicit KV1Writer(std::string_view kv1Data = "", bool useEscapeSequences_ = false)
-			: KV1ElementWritable<S>()
-			, useEscapeSequences(useEscapeSequences_) {
+	/// Generic constructor, accepts all template variants of this class
+	explicit KV1() = default;
+
+	/// Constructor used for text based keyvalues
+	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false)
+	requires (std::is_convertible_v<KeyType, std::string_view> && std::is_convertible_v<ValueType, std::string_view> // Requires the values to be able to be represented as strings
+			&& !(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>) ): // But not any string_reference
+			KV1Element<KeyType, ValueType>() {
 		// Skip the UTF-8 BOM
 		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
 			kv1Data.remove_prefix(3);
@@ -737,30 +502,35 @@ public:
 		}
 		BufferStreamReadOnly stream{kv1Data};
 		try {
-			KV1ElementWritable<S>::read(stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(this->useEscapeSequences));
+			KV1Element<KeyType, ValueType>::read(stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
 		} catch (const std::overflow_error&) {}
 	}
 
-	/// Constructor used to cast KV1ElementWritable into a KV1Writer
-	KV1Writer(const KV1ElementWritable<S>& kv1Data, bool useEscapeSequences_ = false) : useEscapeSequences(useEscapeSequences_) {
-		this->children = kv1Data.getChildren();
-		this->key = kv1Data.getKey();
-	}
-
-	friend class KV1<S>; // Befriend the class, but only of the same type
-
-	/// Construct from a read-only KV1<S>
-	KV1Writer(const KV1<S>& other) {
-		this->useEscapeSequences = other.useEscapeSequences;
-		for (auto element : other.getChildren()) {
-			this->children.push_back(KV1ElementWritable<S>(element));
+	/// Used to construct KV1 from data, if we specified that we're gonna use String Reference.
+	/// You will need to create the manager yourself!
+	explicit KV1(std::shared_ptr<stringpp::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
+	requires (std::same_as<KeyType, strref> || std::same_as<ValueType, strref>):
+			KV1Element<KeyType, ValueType>() {
+		this->string_manager = mgr;
+		// Skip the UTF-8 BOM
+		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
+			kv1Data.remove_prefix(3);
 		}
+		if (kv1Data.empty()) {
+			return;
+		}
+		BufferStreamReadOnly stream{kv1Data};
+		try {
+			KV1Element<KeyType, ValueType>::read(mgr, stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
+		} catch (const std::overflow_error&) {}
 	}
 
-	[[nodiscard]] std::string bake() const {
+
+
+	[[nodiscard]] std::string bake(const bool useEscapeSequences = false) const {
 		std::string buffer;
 		BufferStream stream{buffer};
-		KV1ElementWritable<S>::write(stream, this->children, 0, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(this->useEscapeSequences));
+		KV1Element<KeyType, ValueType>::write(stream, this->children, 0, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
 		buffer.resize(stream.size());
 		return buffer;
 	}
@@ -768,29 +538,8 @@ public:
 	void bake(const std::filesystem::path& kv1Path) const {
 		sourcepp::fs::writeFileText(kv1Path, this->bake());
 	}
-
-protected:
-	using KV1ElementWritable<S>::getKey;
-	using KV1ElementWritable<S>::setKey;
-	using KV1ElementWritable<S>::getValue;
-	using KV1ElementWritable<S>::setValue;
-	using KV1ElementWritable<S>::operator=;
-	using KV1ElementWritable<S>::getConditional;
-	using KV1ElementWritable<S>::setConditional;
-
-	bool useEscapeSequences;
 };
-
-namespace literals {
-
-inline KV1Writer<> operator""_kv1w(const char* str, const std::size_t len) {
-	return KV1Writer{std::string_view{str, len}};
-}
-
-} // namespace literals
-
-template<typename V>
-concept AnyKV1Element = std::same_as<V, KV1ElementReadable<>> ||
-						std::same_as<V, KV1ElementWritable<>>;
-
 } // namespace kvpp
+
+#undef RequiresKeyComparison
+#undef RequiresKeyConversion
