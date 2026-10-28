@@ -21,4 +21,4 @@ add_library(${PROJECT_NAME}_crypto STATIC
 
 target_precompile_headers(${PROJECT_NAME}_crypto PUBLIC ${${PROJECT_NAME}_crypto_HEADERS})
 
-target_link_libraries(${PROJECT_NAME}_crypto PUBLIC ${PROJECT_NAME} libtomcrypt libtommath)
+target_link_libraries(${PROJECT_NAME}_crypto PUBLIC ${PROJECT_NAME} libtomcrypt libtommath sourcepp_math)

@@ -18,4 +18,4 @@ add_library(${PROJECT_NAME}_vmfbsp STATIC
 
 target_precompile_headers(${PROJECT_NAME}_vmfbsp PUBLIC ${${PROJECT_NAME}_vmfbsp_HEADERS})
 
-target_link_libraries(${PROJECT_NAME}_vmfbsp PUBLIC ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_vmfbsp PUBLIC ${PROJECT_NAME} sourcepp_math)

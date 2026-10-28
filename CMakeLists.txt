@@ -145,6 +145,7 @@ include_subdirectory(src/sourcepp/compression)
 include_subdirectory(src/sourcepp/crypto)
 include_subdirectory(src/sourcepp/parser)
 include_subdirectory(src/sourcepp/vmfbsp)
+include_subdirectory(src/sourcepp/math)
 
 
 # Benchmarks
