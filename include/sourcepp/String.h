@@ -123,37 +123,36 @@ std::from_chars_result toFloatOmitInvalid(const std::string_view& number, std::f
 #endif
 }
 
-template<mathpp::Arithmetic P>
+template<mathpp::Arithmetic P, bool robust_parsing = false>
 std::from_chars_result toArithmetic(const std::string_view& number, P& out) {
 	if constexpr (std::same_as<P, bool>) {
 		return toBool(number, out);
 	} else {
-		return std::from_chars(number.data(), number.data() + number.size(), out);
-	}
-}
+		if constexpr (!robust_parsing) {
+			return std::from_chars(number.data(), number.data() + number.size(), out);
+		} else {
+			// Robust parsing
+			if constexpr (std::same_as<P, float>) {
+				std::string clean;
+				for (auto& ch : number) {
+					if (isdigit(ch) || ch == '-' || ch == '+' || ch == '.') {
+						clean += ch;
+					}
+				}
+				return std::from_chars(clean.data(), clean.data() + clean.size(), out);
 
-template<mathpp::Arithmetic P>
-std::from_chars_result toArithmeticRobust(const std::string_view& number, P& out) {
-	if constexpr (std::same_as<P, bool>) {
-		return toBool(number, out);
-	} else if constexpr (std::same_as<P, float>) {
-		std::string clean;
-		for (auto& ch : number) {
-			if (isdigit(ch) || ch == '-' || ch == '+' || ch == '.') {
-				clean += ch;
+			} else if constexpr (std::is_integral_v<P>) {
+				std::string clean;
+				// TODO: Include a way to specify a base
+				for (auto& ch : number) {
+					if (isdigit(ch) || ch == '-' || ch == '+') {
+						clean += ch;
+					}
+				}
+				return std::from_chars(clean.data(), clean.data() + clean.size(), out);
 			}
 		}
-		return std::from_chars(clean.data(), clean.data() + clean.size(), out);
 
-	} else if constexpr (std::is_integral_v<P>) {
-		std::string clean;
-		// TODO: Include a way to specify a base
-		for (auto& ch : number) {
-			if (isdigit(ch) || ch == '-' || ch == '+') {
-				clean += ch;
-			}
-		}
-		return std::from_chars(clean.data(), clean.data() + clean.size(), out);
 	}
 }
 
