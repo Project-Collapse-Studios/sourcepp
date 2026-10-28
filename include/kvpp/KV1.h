@@ -45,7 +45,8 @@ concept KV1UnderlayingValueType = !std::same_as<V, std::string_view> && (
 template<typename V>
 concept KV1AllowedKeyTypes = !std::same_as<V, std::string_view> && (
 							std::same_as<V, stringpp::string_reference> ||
-							std::same_as<V, std::string>);
+							std::same_as<V, std::string> ||
+							std::same_as<V, char*> || std::same_as<V, const char*> );
 
 /// Defines ways to compare the keys
 template<KV1AllowedKeyTypes T0, KV1AllowedKeyTypes T1>
@@ -80,36 +81,46 @@ public:
 	}
 
 	/// Get the value associated with the element as the given type
-	template<KV1ValueType V>
+	template<KV1ValueType V, bool robust_parsing = false>
 	[[nodiscard]] V getValue() const {
-		if constexpr (std::convertible_to<V, std::string>) {
+		if constexpr (std::convertible_to<V, std::string>) { // STRING
+
 			return this->value;
-		} else if constexpr (std::same_as<V, bool>) {
+
+		} else if constexpr (std::same_as<V, bool>) { // BOOL
+
 			bool out;
-			sourcepp::string::toBool(this->value, out);
+			sourcepp::string::toArithmetic<bool, robust_parsing>(this->value, out);
 			return out;
-		} else if constexpr (std::same_as<V, int32_t> || std::same_as<V, int64_t>) {
+
+		} else if constexpr (std::is_integral_v<V>) { // INT
+
 			V out = 0;
 			if (this->value.length() == 10 && this->value.starts_with("0x") && sourcepp::parser::text::isNumber(this->value.substr(2))) {
 				sourcepp::string::toInt(this->value.substr(2), out, 16);
 			} else {
-				sourcepp::string::toInt(this->value, out);
+				sourcepp::string::toArithmetic<V, robust_parsing>(this->value, out);
 			}
 			return out;
-		} else if constexpr (std::same_as<V, float>) {
+
+		} else if constexpr (std::is_floating_point_v<V>) { // FLOAT
+
 			float out = 0.f;
-			sourcepp::string::toFloat(this->value, out);
+			sourcepp::string::toArithmetic<float, robust_parsing>(this->value, out);
 			return out;
-		}  else if constexpr (is_math_vec<V>::value) {
+
+		}  else if constexpr (is_math_vec<V>::value) { // VECTOR
+
 			auto splits = sourcepp::string::split(this->value, ' ');
 			auto return_val = V{};
 			for (uint8_t i = 0; i < return_val.S; ++i) {
 				if (i >= splits.size()) {
 					return_val.values[i] = 0;
 				}
-				sourcepp::string::toArithmetic<typename V::value_type>(splits[i], return_val.values[i]);
+				sourcepp::string::toArithmetic<typename V::value_type, robust_parsing>(splits[i], return_val.values[i]);
 			}
 			return return_val;
+
 		}
 		return V{};
 	}
