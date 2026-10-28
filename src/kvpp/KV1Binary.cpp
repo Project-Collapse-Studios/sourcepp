@@ -314,10 +314,10 @@ void KV1Binary::bake(const std::filesystem::path& kv1Path) const  {
 }
 
 std::string KV1Binary::bakeText() const {
-	KV1Writer writer;
-	std::function<void(const KV1BinaryElement&, KV1ElementWritable<>&)> recurseBinaryKeyValues;
-	recurseBinaryKeyValues = [&recurseBinaryKeyValues](const KV1BinaryElement& element, KV1ElementWritable<>& kv) {
-		auto& child = kv.addChild(element.getKey());
+	KV1<std::string, std::string> writer{"", false};
+	std::function<void(const KV1BinaryElement&, KV1Element<std::string, std::string>&)> recurseBinaryKeyValues;
+	recurseBinaryKeyValues = [&recurseBinaryKeyValues](const KV1BinaryElement& element, KV1Element<std::string, std::string>& kv) {
+		auto& child = kv.addChild(std::string(element.getKey()));
 		switch (static_cast<KV1BinaryValueType>(element.getValue().index())) {
 			using enum KV1BinaryValueType;
 			case CHILDREN:
@@ -326,30 +326,30 @@ std::string KV1Binary::bakeText() const {
 				}
 				break;
 			case STRING:
-				child = *element.getValue<std::string>();
+				child.setValue(*element.getValue<std::string>());
 				break;
 			case INT32:
-				child = *element.getValue<int32_t>();
+				child.setValue(*element.getValue<int32_t>());
 				break;
 			case FLOAT:
-				child = *element.getValue<float>();
+				child.setValue(*element.getValue<float>());
 				break;
 			case POINTER: {
-				child = static_cast<int64_t>(static_cast<uint64_t>(*element.getValue<KV1BinaryPointer>()));
+				child.setValue(static_cast<int64_t>(static_cast<uint64_t>(*element.getValue<KV1BinaryPointer>())));
 				break;
 			}
 			case WSTRING: {
 				// todo: convert to ascii or utf-8
-				const auto val = "";
+				//const auto val = "";
 				break;
 			}
 			case COLOR_RGBA: {
 				const auto val = *element.getValue<mathpp::Vec4ui8>();
-				child = std::format("{} {} {} {}", val[0], val[1], val[2], val[3]);
+				child.setValue(std::format("{} {} {} {}", val[0], val[1], val[2], val[3]));
 				break;
 			}
 			case UINT64:
-				child = std::format("{}", *element.getValue<uint64_t>());
+				child.setValue(std::format("{}", *element.getValue<uint64_t>()));
 				break;
 			case COUNT:
 				break;
