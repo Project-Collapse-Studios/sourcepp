@@ -12,7 +12,7 @@ Brush::Brush(const KeyValues& kv) {
         throw std::underflow_error("No defined brush faces on brush id: " + std::to_string(this->id));
     }
 
-    for (auto side : kv.getChildren()) {
+    for (const auto& side : kv.getChildren()) {
         if (sourcepp::string::iequals(side.getKey(), "side")) {
             this->sides.emplace_back(side);
         }
