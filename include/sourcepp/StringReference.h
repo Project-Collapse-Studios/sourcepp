@@ -8,6 +8,13 @@ namespace stringpp {
 
     class string_reference_manager;
 
+    class string_reference_manager_exception : public std::exception
+    {
+        [[nodiscard]] const char * what() const noexcept override
+        {
+            return "Cannot create a new string reference without a valid manager!";
+        }
+    };
     /// This is just a pointer wrapper
     class string_reference {
 

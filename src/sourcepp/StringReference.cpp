@@ -15,7 +15,7 @@ std::string::const_iterator string_reference::begin() const {
 
 string_reference& string_reference::operator=(const std::string& other) {
     if (this->our_representation == nullptr) {
-        throw std::exception("Cannot create a new string reference without a valid manager!");
+        throw string_reference_manager_exception();
     }
     const auto& ref = this->our_representation->manager->request(other);
     this->operator=(ref);
@@ -24,7 +24,7 @@ string_reference& string_reference::operator=(const std::string& other) {
 
 string_reference& string_reference::operator=(const std::string_view& other) {
     if (this->our_representation == nullptr) {
-        throw std::exception("Cannot create a new string reference without a valid manager!");
+        throw string_reference_manager_exception();
     }
     const auto& ref = this->our_representation->manager->request(std::string(other));
     this->operator=(ref);
