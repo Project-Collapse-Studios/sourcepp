@@ -1,6 +1,6 @@
 #pragma once
 #include "BrushFace.h"
-#include <kvpp/KV1.h>
+#include "VMFBSP.h"
 
 
 constexpr int MAX_BRUSH_FACES = 128;
@@ -11,5 +11,5 @@ class Brush {
     std::vector<BrushFace> sides;
 
 public:
-    explicit Brush(const kvpp::KV1ElementReadable<>& kv);
+    explicit Brush(const KeyValues& kv);
 };

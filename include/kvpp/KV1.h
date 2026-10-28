@@ -46,6 +46,7 @@ template<typename V>
 concept KV1AllowedKeyTypes = !std::same_as<V, std::string_view> && (
 							std::same_as<V, stringpp::string_reference> ||
 							std::same_as<V, std::string> ||
+							(std::is_array_v<V> && std::same_as<std::remove_extent_t<V>, const char>) ||
 							std::same_as<V, char*> || std::same_as<V, const char*> );
 
 /// Defines ways to compare the keys
@@ -125,6 +126,18 @@ public:
 		return V{};
 	}
 
+	/// Get n values (of the same type) from multiple children of the same key.
+	template<KV1ValueType V, bool robust_parsing = false, KV1AllowedKeyTypes K = stringpp::string_reference>
+	std::vector<V> getChildrenValues(K& childKey, uint32_t n = -1) const requires RequiresKeyComparison { // n = -1 will cause it to actually be the max value
+		std::vector<V> result;
+		auto child_count = this->getChildCount(childKey);
+		n = n < child_count ? n : child_count;
+		while (n--) {
+			result.push_back(this->operator()(childKey, n).template getValue<V, robust_parsing>());
+		}
+		return result;
+	}
+
 	/// Set the value associated with the element
 	template<KV1ValueType V>
 	void setValue(V value_) {
@@ -150,7 +163,7 @@ public:
 	}
 
 	/// Check if the element has one or more children with the given key
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] bool hasChild(const K childKey) const requires RequiresKeyComparison {
 		for (const auto& el : *this) {
 			if (CompareKeys(el.key, childKey)) {
@@ -161,7 +174,7 @@ public:
 	}
 
 	/// Add a new child element with the given key, with an optional value
-	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
+	template<KV1AllowedKeyTypes K, KV1ValueType V = ValueType>
 	KV1Element& addChild(KeyType key_, V value_ = {}) requires RequiresKeyConversion {
 		if constexpr(UsesSTRREF) {
 			KV1Element<KeyType, ValueType> elem{this->string_manager};
@@ -177,8 +190,8 @@ public:
 	}
 
 	/// Add a new child element with the given key, with a value and conditional
-	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
-	KV1Element& addChild(KeyType key_, V value_, const std::string& conditional_) requires RequiresKeyConversion {
+	template<KV1AllowedKeyTypes K, KV1ValueType V>
+	KV1Element& addChild(K key_, V value_, const std::string& conditional_) requires RequiresKeyConversion {
 		if constexpr(UsesSTRREF) {
 			KV1Element<KeyType, ValueType> elem{this->string_manager};
 			this->children.push_back(elem);
@@ -199,8 +212,8 @@ public:
 	}
 
 	/// Get the number of child elements with the given key
-	template<KV1AllowedKeyTypes K = KeyType>
-	[[nodiscard]] uint64_t getChildCount(KeyType childKey) const requires RequiresKeyComparison {
+	template<KV1AllowedKeyTypes K>
+	[[nodiscard]] uint64_t getChildCount(K childKey) const requires RequiresKeyComparison {
 		uint64_t count = 0;
 		for (const auto& element : this->children) {
 			if (CompareKeys(element.key, childKey)) {

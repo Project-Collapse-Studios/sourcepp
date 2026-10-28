@@ -1,10 +1,10 @@
 #include <sourcepp/vmfbsp/BrushFace.h>
 
-BrushFace::BrushFace(const kvpp::KV1ElementReadable<>& kv) : Material(kv) {
+BrushFace::BrushFace(const KeyValues& kv) : Material(kv) {
     this->id = kv["id"].getValue<int>();
 
     // Plane
-    mathpp::Vec3f p1, p2, p3;
+    mathpp::Point p1, p2, p3;
     using namespace sourcepp::string;
     const auto splits = split(kv["plane"].getValue(), ' ');
     if (splits.size() < 9) {

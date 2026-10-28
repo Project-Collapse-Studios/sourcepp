@@ -1,6 +1,6 @@
 #include <sourcepp/vmfbsp/Editor.h>
 
-EditorInfo::EditorInfo(const kvpp::KV1ElementReadable<> &kv)
+EditorInfo::EditorInfo(const KeyValues& kv)
 {
     this->color = kv("color").getValue<mathpp::Vec3i8>();
     this->visgroupid = kv.getChildrenValues<unsigned int>("visgroupid");

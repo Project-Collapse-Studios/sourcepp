@@ -317,7 +317,7 @@ std::string KV1Binary::bakeText() const {
 	KV1<std::string, std::string> writer{"", false};
 	std::function<void(const KV1BinaryElement&, KV1Element<std::string, std::string>&)> recurseBinaryKeyValues;
 	recurseBinaryKeyValues = [&recurseBinaryKeyValues](const KV1BinaryElement& element, KV1Element<std::string, std::string>& kv) {
-		auto& child = kv.addChild(std::string(element.getKey()));
+		auto& child = kv.addChild<std::string>(std::string(element.getKey()));
 		switch (static_cast<KV1BinaryValueType>(element.getValue().index())) {
 			using enum KV1BinaryValueType;
 			case CHILDREN:

@@ -5,7 +5,7 @@
 #include <kvpp/KV1.h>
 #include "Output.h"
 #include "Brush.h"
-
+#ifdef DUPA
 #ifdef Use_STRINGVIEW
 using key_base = std::string_view;
 #else
@@ -150,3 +150,4 @@ public:
             }
         }
 };
+#endif

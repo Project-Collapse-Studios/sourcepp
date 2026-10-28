@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <kvpp/KV1.h>
+#include "VMFBSP.h"
 
 /// Represents an I/O event between entities configured inside VMF/BSP files.
 class Output {
@@ -23,7 +23,6 @@ public:
         num_fires(num_fires_) {};
 
     /// VMF format construction
-    template<kvpp::AnyKV1Element KeyValues>
     explicit Output(const KeyValues& kv) {
         this->output_name = kv.getKey();
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <cinttypes>
-#include "sourcepp/Math.h"
+#include <sourcepp/math/Vec.h>
+#include "VMFBSP.h"
 
 class DisplacementColumns
 {
@@ -13,7 +14,7 @@ class DisplacementColumns
     std::unordered_map<int, int> allowedVerts;
 
 public:
-    explicit DisplacementColumns(const kvpp::KV1ElementReadable<> &kv);
+    explicit DisplacementColumns(const KeyValues &kv);
 };
 
 class DisplacementInfo
@@ -30,6 +31,6 @@ class DisplacementInfo
     DisplacementColumns displacementColumns;
 
 public:
-    explicit DisplacementInfo(const kvpp::KV1ElementReadable<> &kv);
+    explicit DisplacementInfo(const KeyValues &kv);
 
 };

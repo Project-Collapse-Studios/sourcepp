@@ -2,8 +2,8 @@
 #include <iostream>
 
 
-Material::Material(const kvpp::KV1ElementReadable<>& kv) {
-    this->mat_file.emplace<1>(kv["material"].getValue<std::string_view>());
+Material::Material(const KeyValues& kv) {
+    this->mat_file.emplace<1>(kv["material"].getValue());
 
     using namespace sourcepp::string;
     // UAxis

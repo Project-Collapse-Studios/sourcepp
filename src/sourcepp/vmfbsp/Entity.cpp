@@ -1,5 +1,5 @@
 #include "sourcepp/vmfbsp/Entity.h"
-
+#ifdef DUPA
 using namespace mathpp;
 using Keyvalues = kvpp::KV1Writer<key_base>;
 
@@ -61,3 +61,4 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
 Entity::~Entity() {
     this->outputs.clear();
 }
+#endif
