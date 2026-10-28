@@ -91,7 +91,7 @@ namespace stringpp {
             == std::string_view { other.begin(), other.end() };
         }
 
-        constexpr bool starts_with(const std::string_view sv) const noexcept {
+        bool starts_with(const std::string_view sv) const noexcept {
             if (sv.length() > this->our_representation->len) { return false; }
             size_t indx = 0;
             for (const auto c : *this) {
@@ -102,12 +102,12 @@ namespace stringpp {
             return true;
         }
 
-        constexpr bool starts_with(const char c) const noexcept {
+        bool starts_with(const char c) const noexcept {
             if (this->our_representation->len == 0) {return false;}
             return *this->begin() == c;
         }
 
-        constexpr bool starts_with(const char* chararr) const {
+        bool starts_with(const char* chararr) const {
             const auto begin = this->begin();
             for (size_t i = 0; chararr[i] != '\0' && i < this->our_representation->len; ++i) {
                 if (*(begin + i) != chararr[i]) {return false;}
