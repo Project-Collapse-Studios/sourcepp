@@ -36,13 +36,14 @@ concept KV1ValueType = std::convertible_to<V, std::string>
 
 /// How the underlaying data is stored, this needs to be some sub-type of string.
 template<typename V>
-concept KV1UnderlayingValueType = std::same_as<V, stringpp::string_reference> ||
-								std::same_as<V, std::string>;
+concept KV1UnderlayingValueType = !std::same_as<V, std::string_view> && (
+								std::same_as<V, stringpp::string_reference> ||
+								std::same_as<V, std::string>);
 
-/// All values are allowed as keys?
 template<typename V>
-concept KV1AllowedKeyTypes = std::same_as<V, stringpp::string_reference> ||
-							std::same_as<V, std::string>;
+concept KV1AllowedKeyTypes = !std::same_as<V, std::string_view> && (
+							std::same_as<V, stringpp::string_reference> ||
+							std::same_as<V, std::string>);
 
 /// Defines ways to compare the keys
 template<KV1AllowedKeyTypes T0, KV1AllowedKeyTypes T1>
@@ -481,7 +482,11 @@ protected:
 #endif
 };
 
+/// Class representing a KeyValue 1 tree object.
+/// You can use different (string-based) types for Keys and Values
 template<KV1AllowedKeyTypes KeyType = stringpp::string_reference, KV1UnderlayingValueType ValueType = stringpp::string_reference>
+requires (!((std::same_as<KeyType, std::string_view> && std::same_as<ValueType, stringpp::string_reference>) ||
+	(std::same_as<KeyType, stringpp::string_reference> && std::same_as<ValueType, std::string_view>)))
 class KV1 : public KV1Element<KeyType, ValueType> {
 	using strref = stringpp::string_reference;
 public:
@@ -489,9 +494,11 @@ public:
 	explicit KV1() = default;
 
 	/// Constructor used for text based keyvalues
+	/// This should be used for KV1s that use deepcopy-based strings, such as std::string
 	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false)
-	requires (std::is_convertible_v<KeyType, std::string_view> && std::is_convertible_v<ValueType, std::string_view> // Requires the values to be able to be represented as strings
-			&& !(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>) ): // But not any string_reference
+	requires (std::is_convertible_v<KeyType, std::string> && std::is_convertible_v<ValueType, std::string> // Requires the values to be able to be represented as strings
+			&& !(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)  // But not any string_reference
+			):
 			KV1Element<KeyType, ValueType>() {
 		// Skip the UTF-8 BOM
 		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
@@ -510,7 +517,7 @@ public:
 	/// You will need to create the manager yourself!
 	explicit KV1(std::shared_ptr<stringpp::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
 	requires (std::same_as<KeyType, strref> || std::same_as<ValueType, strref>):
-			KV1Element<KeyType, ValueType>() {
+			KV1Element<KeyType, ValueType>(mgr) {
 		this->string_manager = mgr;
 		// Skip the UTF-8 BOM
 		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
@@ -524,8 +531,6 @@ public:
 			KV1Element<KeyType, ValueType>::read(mgr, stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
 		} catch (const std::overflow_error&) {}
 	}
-
-
 
 	[[nodiscard]] std::string bake(const bool useEscapeSequences = false) const {
 		std::string buffer;
