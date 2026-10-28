@@ -18,6 +18,8 @@
 #define RequiresKeyComparison ((std::convertible_to<K, std::string_view> && std::convertible_to<KeyType, std::string_view>) || std::equality_comparable_with<K, KeyType>)
 /// Defines conditions that allow us to convert from V type to the type that's defined as the KeyType in KV1
 #define RequiresKeyConversion ((std::convertible_to<K, std::string_view> && std::same_as<KeyType, strref>) || std::convertible_to<K, KeyType>)
+/// Class uses string reference
+#define UsesSTRREF (std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)
 
 namespace kvpp {
 
@@ -150,7 +152,13 @@ public:
 	/// Add a new child element with the given key, with an optional value
 	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
 	KV1Element& addChild(KeyType key_, V value_ = {}) requires RequiresKeyConversion {
-		this->children.emplace_back({});
+		if constexpr(UsesSTRREF) {
+			KV1Element<KeyType, ValueType> elem{this->string_manager};
+			this->children.push_back(elem);
+		} else {
+			KV1Element<KeyType, ValueType> elem{};
+			this->children.push_back(elem);
+		}
 		KV1Element& elem = this->children.back();
 		elem.setKey(key_);
 		elem.setValue(value_);
@@ -160,7 +168,13 @@ public:
 	/// Add a new child element with the given key, with a value and conditional
 	template<KV1AllowedKeyTypes K = KeyType, KV1ValueType V = ValueType>
 	KV1Element& addChild(KeyType key_, V value_, const std::string& conditional_) requires RequiresKeyConversion {
-		this->children.emplace_back({});
+		if constexpr(UsesSTRREF) {
+			KV1Element<KeyType, ValueType> elem{this->string_manager};
+			this->children.push_back(elem);
+		} else {
+			KV1Element<KeyType, ValueType> elem{};
+			this->children.push_back(elem);
+		}
 		KV1Element& elem = this->children.back();
 		elem.setKey(key_);
 		elem.setValue(value_);
@@ -469,7 +483,7 @@ protected:
 	KeyType key; // NOLINT(*-redundant-string-init)
 	ValueType value; // NOLINT(*-redundant-string-init)
 	std::string conditional; // NOLINT(*-redundant-string-init)
-	std::vector<KV1Element> children;
+	std::vector<KV1Element<KeyType, ValueType>> children;
 
 
 	struct empty {};
@@ -490,14 +504,11 @@ requires (!((std::same_as<KeyType, std::string_view> && std::same_as<ValueType, 
 class KV1 : public KV1Element<KeyType, ValueType> {
 	using strref = stringpp::string_reference;
 public:
-	/// Generic constructor, accepts all template variants of this class
-	explicit KV1() = default;
-
 	/// Constructor used for text based keyvalues
 	/// This should be used for KV1s that use deepcopy-based strings, such as std::string
 	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false)
 	requires (std::is_convertible_v<KeyType, std::string> && std::is_convertible_v<ValueType, std::string> // Requires the values to be able to be represented as strings
-			&& !(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)  // But not any string_reference
+			&& !UsesSTRREF  // But not any string_reference
 			):
 			KV1Element<KeyType, ValueType>() {
 		// Skip the UTF-8 BOM
@@ -516,7 +527,7 @@ public:
 	/// Used to construct KV1 from data, if we specified that we're gonna use String Reference.
 	/// You will need to create the manager yourself!
 	explicit KV1(std::shared_ptr<stringpp::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
-	requires (std::same_as<KeyType, strref> || std::same_as<ValueType, strref>):
+	requires UsesSTRREF:
 			KV1Element<KeyType, ValueType>(mgr) {
 		this->string_manager = mgr;
 		// Skip the UTF-8 BOM
@@ -548,3 +559,4 @@ public:
 
 #undef RequiresKeyComparison
 #undef RequiresKeyConversion
+#undef UsesSTRREF
