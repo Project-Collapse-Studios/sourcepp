@@ -14,22 +14,12 @@ namespace stringpp {
         /// A representation of this string_reference that lives inside the set
         class str_ref_repr {
         public:
-            const std::string* buffer = nullptr; // The buffer we store our data in
             string_reference_manager* manager = nullptr; // The manager we belong to
             size_t start = 0; // The starting character's index belonging to our string
             std::uint16_t len = 0; // Length of the string
 
             /// Stores the amount of string_reference that reference us.
             size_t reference_count = 0;
-
-            //bool operator==(const str_ref_repr& other) const {
-            //    return  this->buffer == other.buffer &&
-            //            this->start == other.start &&
-            //            this->len == other.len;
-            //}
-
-            /// Decreases the reference count, and if it drops to 0 calls to the manager to delete this object.
-            void decrease_ref();
         };
 
         str_ref_repr* our_representation = nullptr;
@@ -51,7 +41,7 @@ namespace stringpp {
 
         ~string_reference() {
             if (this->our_representation != nullptr) {
-                this->our_representation->decrease_ref(); // This can possibly cause a chain reaction that will lead to str_ref_repr being deleted from memory.
+                --this->our_representation->reference_count;
             }
         }
 
@@ -62,12 +52,7 @@ namespace stringpp {
         // BEGIN PUBLIC INTERFACE
     public:
         // Conversions
-        operator std::string() const {
-            if (this->our_representation->buffer == nullptr) {
-                return "";
-            }
-            return this->our_representation->buffer->substr(this->our_representation->start, this->our_representation->len);
-        }
+        operator std::string() const;
 
         operator std::string_view() const
         {
@@ -88,16 +73,23 @@ namespace stringpp {
         string_reference& operator=(const std::string_view& other);
 
 
-        std::string::const_iterator begin() const {
-            return this->our_representation->buffer->begin() + this->our_representation->start;
-        }
+        std::string::const_iterator begin() const;
 
         std::string::const_iterator end() const {
             return this->begin() + this->our_representation->len;
         }
 
         bool operator==(const string_reference& other) const {
-            return this->our_representation == other.our_representation; // Pointer comparison!
+            return std::string_view{ this->begin(), this->end()}
+            == std::string_view { other.begin(), other.end() };
+        }
+
+        std::uint16_t length() const {
+            return this->our_representation->len;
+        }
+
+        bool empty() const {
+            return this->our_representation->len == 0;
         }
 
         friend std::ostream& operator<<(std::ostream& op, const string_reference& obj) {
@@ -109,6 +101,12 @@ namespace stringpp {
 
     };
 
+    template<typename V>
+    concept StringAlike =   std::same_as<V, std::string> ||
+                            std::same_as<V, std::string_view> ||
+                            std::same_as<V, string_reference> ||
+                           (std::is_array_v<V> && std::same_as<std::remove_extent_t<V>, char>) ||
+                            std::same_as<V, char*>;
 
     class string_reference_manager {
 
@@ -120,6 +118,7 @@ namespace stringpp {
             std::size_t operator()(const string_reference::str_ref_repr* ref) const noexcept;
             std::size_t operator()(const std::string& ref) const noexcept;
             std::size_t operator()(std::string_view ref) const noexcept;
+            std::size_t operator()(const char* ref) const noexcept;
         };
 
         struct str_ref_comp
@@ -128,39 +127,35 @@ namespace stringpp {
 
             constexpr bool operator()(const std::string& ref, const string_reference::str_ref_repr* ref2) const
             {
-                return std::string_view { ref2->buffer->begin() + ref2->start, ref2->buffer->begin() + ref2->start + ref2->len } == ref;
+                return std::string_view { ref2->manager->buffer->begin() + ref2->start, ref2->manager->buffer->begin() + ref2->start + ref2->len } == ref;
             };
             constexpr bool operator()(const std::string_view ref, const string_reference::str_ref_repr* ref2) const
             {
-                return std::string_view { ref2->buffer->begin() + ref2->start, ref2->buffer->begin() + ref2->start + ref2->len } == ref;
+                return std::string_view { ref2->manager->buffer->begin() + ref2->start, ref2->manager->buffer->begin() + ref2->start + ref2->len } == ref;
             };
             constexpr bool operator()(const string_reference::str_ref_repr* ref, const string_reference::str_ref_repr* ref2) const
             {
-                return std::string_view{ ref->buffer->begin() + ref->start, ref->buffer->begin() + ref->start + ref->len }
-                == std::string_view { ref2->buffer->begin() + ref2->start, ref2->buffer->begin() + ref2->start + ref2->len };
+                return std::string_view{ ref->manager->buffer->begin() + ref->start, ref->manager->buffer->begin() + ref->start + ref->len }
+                == std::string_view { ref2->manager->buffer->begin() + ref2->start, ref2->manager->buffer->begin() + ref2->start + ref2->len };
             };
+            constexpr bool operator()(const char* ref, const string_reference::str_ref_repr* ref2) const {
+                return std::string_view{ref} == std::string_view { ref2->manager->buffer->begin() + ref2->start, ref2->manager->buffer->begin() + ref2->start + ref2->len };
+            }
         };
 
+        friend string_reference;
+        friend string_reference::str_ref_repr;
 
         std::unordered_set<string_reference::str_ref_repr*, str_ref_hash, str_ref_comp> set;
         /// Manager has exclusive ownership of buffer. No operations from outside are allowed.
-        std::unique_ptr<std::string> buffer_ptr;
-
-        friend string_reference::str_ref_repr;
-        void RemoveRepresentation(string_reference::str_ref_repr* repr) {
-            const auto it = this->set.find(repr);
-            this->set.erase(it);
-            delete repr;
-        }
-
+        std::unique_ptr<std::string> buffer;
 
         string_reference::str_ref_repr empty_repr;
 
     public:
         /// Create the manager.
         explicit string_reference_manager() {
-            this->buffer_ptr = std::make_unique<std::string>();
-            this->empty_repr.buffer = this->buffer_ptr.get();
+            this->buffer = std::make_unique<std::string>();
             this->empty_repr.len = 0;
             this->empty_repr.start = 0;
             this->empty_repr.manager = this;
@@ -168,14 +163,66 @@ namespace stringpp {
 
         /// Create whilst passing a ready to be read buffer.
         explicit string_reference_manager(std::unique_ptr<std::string> buffer) {
-            this->buffer_ptr = std::move(buffer);
-            this->empty_repr.buffer = this->buffer_ptr.get();
+            this->buffer = std::move(buffer);
             this->empty_repr.len = 0;
             this->empty_repr.start = 0;
             this->empty_repr.manager = this;
         }
 
+        ~string_reference_manager() {
+            for (auto el : this->set) {
+                delete el;
+            }
+        }
+
         /// Request a string reference from us.
-        [[nodiscard]] string_reference request(const std::string &str);
+        template<StringAlike V>
+        [[nodiscard]] string_reference request(const V& str) {
+            if constexpr (std::is_array_v<V>) {
+                if (str[0] == '\0') {
+                    return string_reference{&this->empty_repr};
+                }
+            } else {
+                if (str.empty()) {
+                    return string_reference{&this->empty_repr};
+                }
+            }
+            auto out = new string_reference::str_ref_repr{};
+            out->start = 0;
+            out->manager = this;
+
+            if constexpr (std::is_array_v<V>) {
+                for (size_t i = 0; str[i] != '\0'; ++i) {
+                    ++out->len;
+                }
+            } else {
+                out->len = str.length();
+            }
+
+            // Our hash and compare set supports all types of V
+            const auto it = this->set.find(str);
+            if (it == this->set.end()) {
+                out->start = this->buffer->length();
+                this->buffer->append(str); // This should automatically handle conversion to a supported type.
+                this->set.insert(out);
+            } else {
+                // String already exists, delete the previous object and grab the one from the set
+                delete out;
+                out = *it;
+            }
+
+            return string_reference{out};
+        }
+
+        /// Clears unused references from memory.
+        /// This is expensive!
+        void ClearUnusedReferences() {
+            for (auto it = this->set.begin(); it != this->set.end(); ++it) {
+                if ((*it)->reference_count == 0) {
+                    this->buffer->erase((*it)->start, (*it)->len);
+                    this->set.erase(it);
+                }
+            }
+        }
     };
 }
