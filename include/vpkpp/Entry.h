@@ -5,7 +5,6 @@
 #include <variant>
 #include <vector>
 
-#include <sourcepp/Math.h>
 
 namespace vpkpp {
 

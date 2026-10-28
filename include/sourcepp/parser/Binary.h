@@ -2,11 +2,9 @@
 
 #pragma once
 
-#include <cstddef>
 #include <fstream>
 #include <string>
 
-#include <sourcepp/Math.h>
 
 class BufferStream;
 

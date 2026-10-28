@@ -9,7 +9,7 @@
 #include <sourcepp/parser/Text.h>
 #include <sourcepp/String.h>
 
-#include <sourcepp/Math.h>
+#include <sourcepp/math/Vec.h>
 
 #include <format>
 #include <sourcepp/FS.h>

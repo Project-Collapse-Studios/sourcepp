@@ -2,7 +2,7 @@
 #include <variant>
 #include <kvpp/specialized/VMT.h>
 #include <kvpp/KV1.h>
-#include <sourcepp/Math.h>
+#include <sourcepp/math/Vec.h>
 
 using VMT_or_String = std::variant<const VMT*, std::string_view>;
 

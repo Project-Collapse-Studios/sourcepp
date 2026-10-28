@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sourcepp/Math.h>
+#include <sourcepp/math/Math.h>
 
 namespace vpkpp {
 

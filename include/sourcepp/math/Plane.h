@@ -1,12 +1,11 @@
 #pragma once
 
-#include <sourcepp/Math.h>
+#include "Vec.h"
 
 
 
 namespace mathpp {
     class Plane {
-        using Point = Vec3f;
 
         // normal.x * x + normal.y * y + normal.z * z = distance
         Vec3f normal;

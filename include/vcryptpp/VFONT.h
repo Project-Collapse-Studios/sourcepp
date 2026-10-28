@@ -5,7 +5,6 @@
 #include <string_view>
 #include <vector>
 
-#include <sourcepp/Math.h>
 
 namespace vcryptpp::VFONT {
 

@@ -2,8 +2,7 @@
 
 #include <variant>
 
-#include <sourcepp/Macros.h>
-#include <sourcepp/MathExtended.h>
+#include <sourcepp/math/Vec.h>
 #include <vtfpp/ImageConversion.h>
 
 using namespace sourcepp;

@@ -4,7 +4,6 @@
 #include <span>
 #include <vector>
 
-#include <sourcepp/Math.h>
 
 namespace sourcepp::crypto {
 

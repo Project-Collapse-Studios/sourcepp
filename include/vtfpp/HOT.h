@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <sourcepp/Macros.h>
-#include <sourcepp/Math.h>
 
 namespace vtfpp {
 

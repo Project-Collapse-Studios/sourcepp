@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <BufferStream.h>
-#include <sourcepp/Math.h>
 
 namespace toolpp {
 

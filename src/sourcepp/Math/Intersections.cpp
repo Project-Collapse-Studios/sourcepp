@@ -1,7 +1,7 @@
 #include <sourcepp/Math/Intersections.h>
+#include <sourcepp/math/Matrix.h>
 
 using namespace mathpp;
-using Point = Vec3f;
 
 bool Intersect(const Plane& plane1, const Plane& plane2, ParametricLine& out) {
     const auto& norm1 = plane1.GetNormal();

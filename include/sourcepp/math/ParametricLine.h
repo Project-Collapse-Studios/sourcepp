@@ -1,10 +1,9 @@
 #pragma once
 
-#include <sourcepp/Math.h>
+#include "Vec.h"
 
 namespace mathpp {
     class ParametricLine {
-        using Point = Vec3f;
 
         Vec3f dir;
         Point origin;

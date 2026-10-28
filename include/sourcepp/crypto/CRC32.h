@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <span>
 
-#include <sourcepp/Math.h>
 
 namespace sourcepp::crypto {
 

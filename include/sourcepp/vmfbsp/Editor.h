@@ -1,5 +1,5 @@
 #pragma once
-#include <sourcepp/Math.h>
+#include <sourcepp/math/Vec.h>
 #include "kvpp/KV1.h"
 
 class EditorInfo {

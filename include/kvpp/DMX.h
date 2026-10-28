@@ -8,7 +8,8 @@
 #include <variant>
 #include <vector>
 
-#include <sourcepp/Math.h>
+#include <sourcepp/math/Vec.h>
+#include <sourcepp/math/Matrix.h>
 
 namespace kvpp {
 

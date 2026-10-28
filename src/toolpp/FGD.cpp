@@ -12,7 +12,6 @@
 
 #include <sourcepp/parser/Text.h>
 #include <sourcepp/FS.h>
-#include <sourcepp/Math.h>
 
 using namespace sourcepp;
 using namespace std::string_view_literals;

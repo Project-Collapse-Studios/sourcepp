@@ -47,7 +47,7 @@
 #endif
 
 #include <sourcepp/Macros.h>
-#include <sourcepp/MathExtended.h>
+#include <sourcepp/math/MathExtended.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_STATIC

@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <sourcepp/parser/Binary.h>
-#include <sourcepp/Math.h>
 
 namespace sourcepp::compression {
 
