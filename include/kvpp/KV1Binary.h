@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-#include <sourcepp/Math/Vec.h>
+#include <sourcepp/math/Vec.h>
 
 namespace kvpp {
 
