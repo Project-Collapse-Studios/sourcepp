@@ -31,6 +31,10 @@ string_reference& string_reference::operator=(const std::string_view& other) {
     return *this;
 }
 
+std::string string_reference::substr(const size_t start, size_t length) const {
+    length = std::max<size_t>(length, this->our_representation->len);
+    return this->our_representation->manager->buffer->substr(this->our_representation->start + start, length);
+}
 
 std::size_t string_reference_manager::str_ref_hash::operator()(const string_reference::str_ref_repr* ref) const noexcept {
     // FNV-1a
