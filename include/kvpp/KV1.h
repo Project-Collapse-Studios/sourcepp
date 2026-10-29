@@ -93,6 +93,11 @@ public:
 		return this->value;
 	}
 
+	/// Retrieve the string_reference manager, if we're based on str_refs
+	[[nodiscard]] std::shared_ptr<stringpp::string_reference_manager> getSTRREFManager() const requires UsesSTRREF {
+		return this->string_manager;
+	}
+
 	/// Get the value associated with the element as the given type
 	template<KV1ValueType V, bool robust_parsing = false>
 	[[nodiscard]] V getValue() const {
@@ -299,19 +304,19 @@ public:
 	}
 
 	/// Get the first child element of the element with the given key
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] const KV1Element& operator[](K childKey) const requires RequiresKeyComparison {
 		return this->operator()(childKey);
 	}
 
 	/// Get the first child element of the element with the given key, or create a new element if it doesn't exist
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] KV1Element& operator[](K childKey) requires RequiresKeyComparison {
 		return this->operator()(childKey);
 	}
 
 	/// Get the first child element of the element with the given key
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] const KV1Element& operator()(K childKey) const requires RequiresKeyComparison {
 		for (const auto& element : this->children) {
 			if (CompareKeys(element.key, childKey)) {
@@ -322,18 +327,18 @@ public:
 	}
 
 	/// Get the first child element of the element with the given key, or create a new element if it doesn't exist
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] KV1Element& operator()(K childKey) requires RequiresKeyComparison && RequiresKeyConversion {
 		for (auto& element : this->children) {
 			if (CompareKeys(element.key, childKey)) {
 				return element;
 			}
 		}
-		return this->addChild(childKey);
+		return this->template addChild<K, ValueType>(childKey);
 	}
 
 	/// Get the nth child element of the element with the given key
-	template<KV1AllowedKeyTypes K = KeyType>
+	template<KV1AllowedKeyTypes K>
 	[[nodiscard]] const KV1Element& operator()(K childKey, unsigned int n) const requires RequiresKeyComparison && RequiresKeyConversion {
 		unsigned int count = 0;
 		for (const auto& element : this->children) {
@@ -350,8 +355,8 @@ public:
 	}
 
 	/// Get the nth child element of the element with the given key, or create a new element if it doesn't exist
-	template<KV1AllowedKeyTypes K = KeyType>
-	[[nodiscard]] KV1Element& operator()(std::string_view childKey, unsigned int n) requires RequiresKeyComparison && RequiresKeyConversion {
+	template<KV1AllowedKeyTypes K>
+	[[nodiscard]] KV1Element& operator()(K childKey, unsigned int n) requires RequiresKeyComparison && RequiresKeyConversion {
 		unsigned int count = 0;
 		for (auto& element: this->children) {
 			if (CompareKeys(element.key, childKey)) {
@@ -363,7 +368,7 @@ public:
 				}
 			}
 		}
-		return this->addChild(childKey);
+		return this->template addChild<K, ValueType>(childKey);
 	}
 
 	/// Remove a child element from the element.
@@ -415,6 +420,18 @@ protected:
 			this->value = mgr->request("");
 		}
 	}
+
+public:
+	/// Transfer between template specializations
+	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
+	KV1Element(const KV1Element<K, V>& other) {
+		this->key = other.getKey();
+		this->value = other.getValue();
+		for (auto c : other) {
+			this->children.emplace_back(c);
+		}
+	}
+protected:
 
 	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
 			(!(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)) { // Cannot use this when we are using a strref to hold any data
@@ -592,6 +609,29 @@ public:
 		try {
 			KV1Element<KeyType, ValueType>::read(mgr, stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
 		} catch (const std::overflow_error&) {}
+	}
+
+	/// Create by new ownership
+	explicit KV1(const KV1Element<KeyType, ValueType>& child) {
+		this->key = child.getKey();
+		this->children = child.getChildren();
+		this->value = child; // uses operator overloads
+		if constexpr (UsesSTRREF) {
+			this->string_manager = child.getSTRREFManager();
+		}
+	}
+
+	/// Transfer between template specializations
+	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
+	KV1(const KV1<K, V>& other) {
+		this->key = other.key;
+		this->value = other.value;
+		for (auto c : other.children) {
+			this->children.emplace_back(c);
+		}
+		if constexpr (UsesSTRREF) {
+			this->string_manager = other.getSTRREFManager();
+		}
 	}
 
 	[[nodiscard]] std::string bake(const bool useEscapeSequences = false) const {
