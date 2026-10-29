@@ -39,7 +39,9 @@ namespace stringpp {
         string_reference() = default; // Allow for the default constructor, but this won't create a valid string_reference!
         string_reference(const string_reference& other) { // Copy constructor
             this->our_representation = other.our_representation;
-            ++this->our_representation->reference_count;
+            if (this->our_representation != nullptr) {
+                ++this->our_representation->reference_count;
+            }
         }
 
         string_reference(string_reference&& other) noexcept {
