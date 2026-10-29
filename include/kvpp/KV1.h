@@ -423,12 +423,34 @@ protected:
 
 public:
 	/// Transfer between template specializations
+	/// If you're transfering from a type that doesn't use strrefs, but this type uses strrefs, you can:
+	/// 1. Pass an already made manager
+	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1Element(const KV1Element<K, V>& other) {
-		this->key = other.getKey();
-		this->value = other.getValue();
+	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<stringpp::string_reference_manager> mgr = {}) {
+		if constexpr (UsesSTRREF) {
+			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
+				this->string_manager = other.getSTRREFManager();
+			} else {
+				if (mgr != nullptr) {
+					// Adopt
+					this->string_manager = mgr;
+				} else {
+					// Create a new one
+					this->string_manager = std::make_unique<stringpp::string_reference_manager>(true);
+				}
+			}
+
+			this->key = this->string_manager->request(other.getKey());
+			this->value = this->string_manager->request(other.getValue());
+
+		} else {
+			this->key = other.getKey();
+			this->value = other.getValue();
+		}
+
 		for (auto c : other) {
-			this->children.emplace_back(c);
+			this->children.emplace_back(c, mgr);
 		}
 	}
 protected:
@@ -622,15 +644,35 @@ public:
 	}
 
 	/// Transfer between template specializations
+	/// If you're transfering from a type that doesn't use strrefs, but this type uses strrefs, you can:
+	/// 1. Pass an already made manager
+	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1(const KV1<K, V>& other) {
-		this->key = other.key;
-		this->value = other.value;
-		for (auto c : other.children) {
-			this->children.emplace_back(c);
-		}
+	KV1(const KV1<K, V>& other, std::shared_ptr<stringpp::string_reference_manager> mgr = {}) {
 		if constexpr (UsesSTRREF) {
-			this->string_manager = other.getSTRREFManager();
+			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
+				this->string_manager = other.getSTRREFManager();
+			} else {
+				if (mgr != nullptr) {
+					// Adopt
+					this->string_manager = mgr;
+				} else {
+					// Create a new one
+					this->string_manager = std::make_unique<stringpp::string_reference_manager>(true);
+				}
+			}
+
+			this->key = this->string_manager->request(other.getKey());
+			this->value = this->string_manager->request(other.getValue());
+
+		} else {
+			this->key = other.key;
+			this->value = other.value;
+		}
+
+		// Transfer children
+		for (auto c : other.children) {
+			this->children.emplace_back(c, this->string_manager);
 		}
 	}
 
