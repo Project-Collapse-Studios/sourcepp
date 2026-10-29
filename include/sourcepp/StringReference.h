@@ -5,7 +5,6 @@
 #include <memory>
 
 namespace stringpp {
-
     class string_reference_manager;
 
     class string_reference_manager_exception : public std::exception
@@ -86,9 +85,39 @@ namespace stringpp {
             return this->begin() + this->our_representation->len;
         }
 
+        /// Compare two string references, compares only by pointer!
+        /// Use str_compare to actually compare the underlaying strings
         bool operator==(const string_reference& other) const {
+            return this->our_representation == other.our_representation;
+        }
+
+        bool str_compare(const string_reference& other) const {
             return std::string_view{ this->begin(), this->end()}
             == std::string_view { other.begin(), other.end() };
+        }
+
+        bool str_compare(const std::string_view other) const {
+            return std::string_view{ this->begin(), this->end()}
+            == other;
+        }
+
+        bool str_compare(const char* other) const {
+            return std::string_view{ this->begin(), this->end()}
+            == std::string_view { other };
+        }
+
+        bool str_compare_caseless(const string_reference& other) const {
+            return sourcepp::string::iequals(std::string_view{ this->begin(), this->end()},
+            std::string_view { other.begin(), other.end() });
+        }
+
+        bool str_compare_caseless(const std::string_view other) const {
+            return sourcepp::string::iequals(std::string_view{ this->begin(), this->end()},
+            other);
+        }
+
+        bool str_compare_caseless(const char* other) const {
+            return sourcepp::string::iequals(std::string_view{ this->begin(), this->end()}, other);
         }
 
         bool starts_with(const std::string_view sv) const noexcept {
@@ -141,6 +170,7 @@ namespace stringpp {
                            (std::is_array_v<V> && std::same_as<std::remove_extent_t<V>, char>) ||
                             std::same_as<V, char*>;
 
+
     class string_reference_manager {
 
         /// Used for hashing
@@ -184,22 +214,25 @@ namespace stringpp {
         std::unique_ptr<std::string> buffer;
 
         string_reference::str_ref_repr empty_repr;
+        bool caseless = false;
 
     public:
         /// Create the manager.
-        explicit string_reference_manager() {
+        explicit string_reference_manager(bool caseless_ = false) {
             this->buffer = std::make_unique<std::string>();
             this->empty_repr.len = 0;
             this->empty_repr.start = 0;
             this->empty_repr.manager = this;
+            this->caseless = caseless_;
         }
 
         /// Create whilst passing a ready to be read buffer.
-        explicit string_reference_manager(std::unique_ptr<std::string> buffer) {
+        explicit string_reference_manager(std::unique_ptr<std::string> buffer, bool caseless_ = false) {
             this->buffer = std::move(buffer);
             this->empty_repr.len = 0;
             this->empty_repr.start = 0;
             this->empty_repr.manager = this;
+            this->caseless = caseless_;
         }
 
         ~string_reference_manager() {
@@ -233,7 +266,25 @@ namespace stringpp {
             }
 
             // Our hash and compare set supports all types of V
-            const auto it = this->set.find(str);
+            std::unordered_set<string_reference::str_ref_repr*, str_ref_hash, str_ref_comp>::const_iterator it;
+            if (!this->caseless) {
+                it = this->set.find(str);
+            } else {
+                // Is there a better way to do this?
+                std::string A;
+                A.reserve(out->len);
+                if constexpr (std::is_array_v<V>) {
+                    for (size_t i = 0; str[i] != '\0'; ++i) {
+                        A += std::tolower(str[i]);
+                    }
+                } else {
+                    for (const auto ch : str) {
+                        A += std::tolower(ch);
+                    }
+                }
+                it = this->set.find(A);
+            }
+
             if (it == this->set.end()) {
                 out->start = this->buffer->length();
                 this->buffer->append(str); // This should automatically handle conversion to a supported type.
