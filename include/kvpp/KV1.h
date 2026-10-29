@@ -35,6 +35,18 @@ concept KV1ValueType = std::convertible_to<V, std::string>
                     || std::floating_point<V>
 					|| is_math_vec<V>::value;
 
+/// Used for defining which types can we automatically convert to.
+/// To prevent ambiguity, chars are not allowed, because then
+/// converting to std::string makes an ambigous operator call.
+/// std::string can construct from both operator std::string(), and operator char()
+template<typename V>
+concept KV1ValueConvertible = KV1ValueType<V> && !std::convertible_to<V, std::string>
+	&& !std::same_as<std::decay_t<V>, char>
+	&& !std::same_as<std::decay_t<V>, char8_t>
+	&& !std::same_as<std::decay_t<V>, char16_t>
+	&& !std::same_as<std::decay_t<V>, char32_t>
+	&& !std::same_as<std::decay_t<V>, wchar_t>;
+
 
 /// How the underlaying data is stored, this needs to be some sub-type of string.
 template<typename V>
@@ -124,6 +136,21 @@ public:
 
 		}
 		return V{};
+	}
+
+	template<KV1ValueConvertible V>
+	operator V() const {
+		if constexpr( // Types that require robust parsing
+			is_math_vec<V>::value // Vectors can be represented like "[x y z]" or just "x y z" etc.
+		) {
+			return this->getValue<V, true>();
+		} else {
+			return this->getValue<V, false>();
+		}
+	}
+
+	operator std::string() const {
+		return this->value;
 	}
 
 	/// Get n values (of the same type) from multiple children of the same key.
