@@ -1,5 +1,4 @@
 #include <sourcepp/vmfbsp/Brush.h>
-#include <unordered_set>
 
 Brush::Brush(const KeyValues& kv) {
     this->id = kv["id"].getValue<int>();

@@ -7,13 +7,13 @@ namespace vmfbsp {
 
     public:
         explicit EditorInfo(const KeyValues& kv) {
-            this->color = kv("color").getValue<mathpp::Vec3i8, true>();
+            this->color = kv("color");
             this->visgroupid = kv.getChildrenValues<unsigned int>("visgroupid");
-            this->group = kv("group").getValue<unsigned int>();
-            this->visgroupshown = kv("visgroupshown").getValue<bool>();
-            this->visgroupautoshown = kv("visgroupautoshown").getValue<bool>();
-            this->comments = kv("comments").getValue();
-            this->logicalpos = kv("logicalpos").getValue<mathpp::Vec2f, true>();
+            this->group = kv("group");
+            this->visgroupshown = kv("visgroupshown");
+            this->visgroupautoshown = kv("visgroupautoshown");
+            this->comments = kv("comments");
+            this->logicalpos = kv("logicalpos");
         }
 
         EditorInfo() = default;
@@ -24,6 +24,6 @@ namespace vmfbsp {
         bool visgroupshown = true;
         bool visgroupautoshown = true;
         std::string comments;
-        mathpp::Vec2f logicalpos;
+        mathpp::Vec2i logicalpos;
     };
 }

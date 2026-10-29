@@ -6,15 +6,15 @@
 /// Represents an I/O event between entities configured inside VMF/BSP files.
 class Output {
 public:
-    std::string_view output_name;
+    std::string output_name;
     std::string target;
-    std::string_view input_name;
-    std::string_view parameter;
+    std::string input_name;
+    std::string parameter;
     float delay = 0;
     int num_fires = -1;
 
     Output() = default;
-    explicit Output(const std::string_view& output_name_, const std::string& target_, const std::string_view& input_name_, const std::string_view& parameter_ = "", const float delay_ = 0, const int num_fires_ = -1):
+    explicit Output(const std::string& output_name_, const std::string& target_, const std::string& input_name_, const std::string& parameter_ = "", const float delay_ = 0, const int num_fires_ = -1):
         output_name(output_name_),
         target(target_),
         input_name(input_name_),
