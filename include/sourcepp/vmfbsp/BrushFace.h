@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sourcepp/Math/Plane.h>
+#include <sourcepp/math/Plane.h>
 #include "Material.h"
 #include "VMFBSP.h"
 
