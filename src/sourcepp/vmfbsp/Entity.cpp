@@ -1,22 +1,22 @@
 #include "sourcepp/vmfbsp/Entity.h"
-#ifdef DUPA
+
 using namespace mathpp;
-using Keyvalues = kvpp::KV1Writer<key_base>;
+using namespace vmfbsp;
 
 Entity::Entity(const std::string& classname_, const Vec3f& origin_, const EulerAngles& angles_) {
     this->classname = classname_;
     this->origin = origin_;
     this->angles = angles_;
-    this->keyvalues = Keyvalues("");
+    this->keyvalues = KeyValuesRoot{""};
     this->spawnflags = 0;
 }
 
-Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
-    keyvalues(keyvalues_) { // Cast KV1ElementWritable onto KV1Writer
+Entity::Entity(const KeyValuesRoot& keyvalues_) :
+    keyvalues(keyvalues_) {
 
     // Check if our values don't have children of chlidren
     for (const auto &value: this->keyvalues) {
-        if (value.getKey() == "connections") {continue;}
+        if (value.getKey() == "connections" || value.getKey() == "editor") {continue;}
         if (value.getChildCount()) {
             throw std::invalid_argument("Key values must be flat! (Have no children)");
         }
@@ -51,7 +51,8 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
     }
 
     if (this->keyvalues.hasChild("connections")) {
-        for (auto& connections = this->keyvalues["connections"]; auto& connection : connections) {
+        auto& connections = this->keyvalues["connections"];
+        for (auto& connection : connections) {
             this->outputs.emplace_back(connection);
         }
         this->keyvalues.removeChild("connections");
@@ -61,4 +62,3 @@ Entity::Entity(const kvpp::KV1ElementWritable<key_base>& keyvalues_) :
 Entity::~Entity() {
     this->outputs.clear();
 }
-#endif
