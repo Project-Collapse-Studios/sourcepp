@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <cstdint>
 #include <memory>
+#include <sourcepp/String.h>
 
 namespace stringpp {
     class string_reference_manager;
