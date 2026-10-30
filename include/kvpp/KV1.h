@@ -193,7 +193,7 @@ public:
 	template<KV1ValueType V>
 	void setValue(V value_) {
 		if constexpr (std::convertible_to<V, std::string>) {
-			this->value = std::string{value_}; // Strref automatically accounts for this.
+			this->value = value_; // Strref automatically accounts for this.
 		} else if constexpr (std::same_as<V, bool>) {
 			this->setValue(std::format("{:b}", value_));
 		} else {
@@ -228,6 +228,9 @@ public:
 	template<KV1AllowedKeyTypes K, KV1ValueType V = ValueType>
 	KV1Element& addChild(K key_, V value_ = {}) requires RequiresKeyConversion {
 		if constexpr(UsesSTRREF) {
+			if (!value_.isValid()) { // We can expect key_ is valid, but value_ might be initalized in this function as invalid
+				value_ = this->string_manager->request("");
+			}
 			KV1Element<KeyType, ValueType> elem{this->string_manager};
 			this->children.push_back(elem);
 		} else {

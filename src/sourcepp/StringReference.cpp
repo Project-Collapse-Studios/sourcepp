@@ -10,6 +10,9 @@ string_reference::operator std::string() const {
 }
 
 std::string::const_iterator string_reference::begin() const {
+    if (!this->isValid()) {
+        throw except_strref_invalid();
+    }
     return this->our_representation->manager->buffer->begin() + this->our_representation->start;
 }
 

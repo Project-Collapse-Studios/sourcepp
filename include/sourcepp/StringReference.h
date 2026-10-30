@@ -8,11 +8,20 @@
 namespace stringpp {
     class string_reference_manager;
 
+    /// EXCEPTIONS
     class string_reference_manager_exception : public std::exception
     {
         [[nodiscard]] const char * what() const noexcept override
         {
             return "Cannot create a new string reference without a valid manager!";
+        }
+    };
+
+    class except_strref_invalid : public std::exception
+    {
+        [[nodiscard]] const char * what() const noexcept override
+        {
+            return "String reference is invalid! (Hasn't been properly initialized)";
         }
     };
     /// This is just a pointer wrapper
@@ -33,15 +42,19 @@ namespace stringpp {
 
         explicit string_reference(str_ref_repr* reference) {
             this->our_representation = reference;
+            if (!this->isValid()) {
+                throw except_strref_invalid();
+            }
             ++this->our_representation->reference_count; // We start to reference it
         };
     public:
         string_reference() = default; // Allow for the default constructor, but this won't create a valid string_reference!
         string_reference(const string_reference& other) { // Copy constructor
-            this->our_representation = other.our_representation;
-            if (this->our_representation != nullptr) {
-                ++this->our_representation->reference_count;
+            if (!other.isValid()) {
+                throw except_strref_invalid();
             }
+            this->our_representation = other.our_representation;
+            ++this->our_representation->reference_count;
         }
 
         string_reference(string_reference&& other) noexcept {
@@ -74,6 +87,9 @@ namespace stringpp {
 
         /// Assign other string_reference, may change the manager we belong to!
         string_reference& operator=(const string_reference& other) {
+            if (!other.isValid()) {
+                throw except_strref_invalid();
+            }
             this->our_representation = other.our_representation;
             ++this->our_representation->reference_count;
             return *this;
@@ -90,6 +106,17 @@ namespace stringpp {
         std::string::const_iterator end() const {
             return this->begin() + this->our_representation->len;
         }
+
+        [[nodiscard]] bool isValid() const {
+            if (this->our_representation == nullptr) {
+                return false;
+            }
+            if (this->our_representation->manager == nullptr) {
+                return false;
+            }
+            return true;
+        }
+
 
         /// Compare two string references, compares only by pointer!
         /// Use str_compare to actually compare the underlaying strings
