@@ -101,6 +101,10 @@ public:
 	/// Get the value associated with the element as the given type
 	template<KV1ValueType V, bool robust_parsing = false>
 	[[nodiscard]] V getValue() const {
+
+        if(this->isInvalid())
+            return V{};
+
 		if constexpr (std::convertible_to<V, std::string>) { // STRING
 
 			return this->value;
@@ -153,6 +157,21 @@ public:
 			return this->getValue<V, false>();
 		}
 	}
+
+    template<KV1ValueConvertible V>
+    operator std::vector<V>() const {
+        std::vector<V> elements;
+        for(const KV1Element & child : this->children) {
+            if constexpr ( // Types that require robust parsing
+                    is_math_vec<V>::value // Vectors can be represented like "[x y z]" or just "x y z" etc.
+                    ) {
+                elements.push_back(child.getValue<V, true>());
+            } else {
+                elements.push_back(child.getValue<V, false>());
+            }
+        }
+        return elements;
+    }
 
 	operator std::string() const {
 		return this->value;

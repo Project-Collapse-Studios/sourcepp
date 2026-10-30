@@ -70,6 +70,8 @@ namespace stringpp {
 
         // Operators
 
+        std::string getString() const;
+
         /// Assign other string_reference, may change the manager we belong to!
         string_reference& operator=(const string_reference& other) {
             this->our_representation = other.our_representation;

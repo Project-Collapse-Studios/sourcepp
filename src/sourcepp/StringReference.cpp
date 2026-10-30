@@ -45,6 +45,13 @@ std::string string_reference::substr(const size_t start, size_t length) const {
     return this->our_representation->manager->buffer->substr(this->our_representation->start + start, length);
 }
 
+std::string string_reference::getString() const {
+    if (!this->our_representation || this->our_representation->len == 0 || this->our_representation->manager == nullptr) {
+        return "";
+    }
+    return this->our_representation->manager->buffer->substr(this->our_representation->start, this->our_representation->len);
+}
+
 std::size_t string_reference_manager::str_ref_hash::operator()(const string_reference::str_ref_repr* ref) const noexcept {
     // FNV-1a
     size_t hash = 14695981039346656037ull; // FNV offset basis
