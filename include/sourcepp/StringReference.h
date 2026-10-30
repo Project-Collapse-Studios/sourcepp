@@ -80,6 +80,7 @@ namespace stringpp {
         /// Assign a string (creates a new string_reference), assigned to the same manager.
         string_reference& operator=(const std::string& other);
         string_reference& operator=(const std::string_view& other);
+        string_reference& operator=(const char* other);
 
 
         std::string::const_iterator begin() const;
@@ -171,7 +172,8 @@ namespace stringpp {
                             std::same_as<V, std::string_view> ||
                             std::same_as<V, string_reference> ||
                            (std::is_array_v<V> && std::same_as<std::remove_extent_t<V>, char>) ||
-                            std::same_as<V, char*>;
+                            //std::same_as<V, char*> ||
+                            std::same_as<V, const char*>;
 
 
     class string_reference_manager {
@@ -247,7 +249,7 @@ namespace stringpp {
         /// Request a string reference from us.
         template<StringAlike V>
         [[nodiscard]] string_reference request(const V& str) {
-            if constexpr (std::is_array_v<V>) {
+            if constexpr (std::is_array_v<V> || std::same_as<V, const char*>) {
                 if (str[0] == '\0') {
                     return string_reference{&this->empty_repr};
                 }
@@ -260,7 +262,7 @@ namespace stringpp {
             out->start = 0;
             out->manager = this;
 
-            if constexpr (std::is_array_v<V>) {
+            if constexpr (std::is_array_v<V> || std::same_as<V, const char*>) {
                 for (size_t i = 0; str[i] != '\0'; ++i) {
                     ++out->len;
                 }
@@ -276,7 +278,7 @@ namespace stringpp {
                 // Is there a better way to do this?
                 std::string A;
                 A.reserve(out->len);
-                if constexpr (std::is_array_v<V>) {
+                if constexpr (std::is_array_v<V> || std::same_as<V, const char*>) {
                     for (size_t i = 0; str[i] != '\0'; ++i) {
                         A += std::tolower(str[i]);
                     }

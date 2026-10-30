@@ -26,7 +26,16 @@ string_reference& string_reference::operator=(const std::string_view& other) {
     if (this->our_representation == nullptr) {
         throw string_reference_manager_exception();
     }
-    const auto& ref = this->our_representation->manager->request(std::string(other));
+    const auto& ref = this->our_representation->manager->request(other);
+    this->operator=(ref);
+    return *this;
+}
+
+string_reference& string_reference::operator=(const char* other) {
+    if (this->our_representation == nullptr) {
+        throw string_reference_manager_exception();
+    }
+    const auto& ref = this->our_representation->manager->request(other);
     this->operator=(ref);
     return *this;
 }
