@@ -226,7 +226,7 @@ public:
 
 	/// Add a new child element with the given key, with an optional value
 	template<KV1AllowedKeyTypes K, KV1ValueType V = ValueType>
-	KV1Element& addChild(KeyType key_, V value_ = {}) requires RequiresKeyConversion {
+	KV1Element& addChild(K key_, V value_ = {}) requires RequiresKeyConversion {
 		if constexpr(UsesSTRREF) {
 			KV1Element<KeyType, ValueType> elem{this->string_manager};
 			this->children.push_back(elem);
