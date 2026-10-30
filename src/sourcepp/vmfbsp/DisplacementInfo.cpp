@@ -1,11 +1,13 @@
 #include "sourcepp/vmfbsp/DisplacementInfo.h"
 
-DisplacementInfo::DisplacementInfo(const kvpp::KV1ElementReadable<> &kv) : displacementColumns(kv)
+DisplacementInfo::DisplacementInfo(const KeyValues &kv) : displacementColumns(kv)
 {
     this->power = kv("power");
+    if(this->power > 4)
+        throw std::overflow_error("Power too high.");
     this->startPosition = kv("startposition");
-    this->elevation = kv("elevation");
     this->subdivided = kv("subdiv");
+    this->elevation = kv("elevation");
     this->flags = kv("flags");
     this->uAxis = kv("uaxis");
     this->vAxis = kv("vaxis");
@@ -13,18 +15,6 @@ DisplacementInfo::DisplacementInfo(const kvpp::KV1ElementReadable<> &kv) : displ
     this->smooth = kv("smooth");
 }
 
-DisplacementColumns::DisplacementColumns(const kvpp::KV1ElementReadable<> &kv)
+DisplacementColumns::DisplacementColumns(const KeyValues &kv)
 {
-
-    this->normals = kv("normals");
-    this->distances = kv("distances");
-    this->offsets = kv("offsets");
-    this->offsetNormals = kv("alpha");
-    this->alpha = kv("offset_normals");
-    this->triangleTags = kv("triangle_tags");
-
-    for(const auto& child : kv("allowed_verts").getChildren())
-    {
-        this->allowedVerts[std::stoi(child.getKey().data())] = child;
-    }
 }

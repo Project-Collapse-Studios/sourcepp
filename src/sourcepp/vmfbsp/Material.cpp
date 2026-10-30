@@ -9,7 +9,7 @@ Material::Material(const KeyValues& kv) {
     // UAxis
     auto splits = split(kv["uaxis"].getValue(), ' ');
     if (splits.size() < 5) { // If more, it will get ignored
-        throw std::exception("Invalid uaxis value!");
+        throw invalid_uaxis_exception_error();
     }
     toFloatOmitInvalid(splits[0], this->u_axis_dir[0]);
     toFloatOmitInvalid(splits[1], this->u_axis_dir[1]);
@@ -21,7 +21,7 @@ Material::Material(const KeyValues& kv) {
     // VAxis
     splits = split(kv["vaxis"].getValue(), ' ');
     if (splits.size() < 5) { // If more, it will get ignored
-        throw std::exception("Invalid vaxis value!");
+        throw invalid_vaxis_exception_error();
     }
     toFloatOmitInvalid(splits[0], this->v_axis_dir[0]);
     toFloatOmitInvalid(splits[1], this->v_axis_dir[1]);

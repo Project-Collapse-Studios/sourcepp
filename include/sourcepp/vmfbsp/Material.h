@@ -7,6 +7,23 @@
 using VMT_or_String = std::variant<const VMT*, std::string>;
 
 class Material {
+
+    struct invalid_uaxis_exception_error : public std::exception
+    {
+        const char * what() const noexcept override
+        {
+            return "Invalid uaxis value!";
+        };
+    };
+
+    struct invalid_vaxis_exception_error : public std::exception
+    {
+        const char * what() const noexcept override
+        {
+            return "Invalid vaxis value!";
+        };
+    };
+
     VMT_or_String mat_file;
 
     // UV Axes

@@ -9,7 +9,7 @@ BrushFace::BrushFace(const KeyValues& kv) : Material(kv) {
     const auto splits = split(kv["plane"].getValue(), ' ');
     if (splits.size() < 9) {
         // If more, it will get ignored
-        throw std::exception("Cannot create BrushFace with fewer than 3 points!");
+        throw too_few_points_exception();
     }
     toFloatOmitInvalid(splits[0], p1[0]);
     toFloatOmitInvalid(splits[1], p1[1]);
@@ -21,4 +21,9 @@ BrushFace::BrushFace(const KeyValues& kv) : Material(kv) {
     toFloatOmitInvalid(splits[7], p3[1]);
     toFloatOmitInvalid(splits[8], p3[2]);
     this->Plane_From3Points(p1, p2, p3);
+
+    if(kv.hasChild("dispinfo"))
+    {
+        this->displacementInfo = DisplacementInfo(kv("dispinfo"));
+    }
 }
