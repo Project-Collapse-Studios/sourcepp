@@ -19,10 +19,9 @@
 namespace vmfbsp {
     class Entity {
 
+    public:
         using KeyValues = kvpp::KV1Element<std::string, std::string>;
         using KeyValuesRoot = kvpp::KV1<std::string, std::string>;
-
-    public:
         // Constructors and destructors
         Entity() = delete;
 
@@ -34,7 +33,7 @@ namespace vmfbsp {
             return std::unique_ptr<Entity>(new Entity(KeyValuesRoot{kv}));
         }
 
-        ~Entity();
+        virtual ~Entity();
         // Getters
 
         [[nodiscard]] std::string GetClassname() const {
@@ -101,6 +100,11 @@ namespace vmfbsp {
         Output RemoveOutput(const unsigned int out_idx) {
             return *this->outputs.erase(this->outputs.begin() + out_idx);
         }
+
+
+        /// SERIALIZERS
+
+        virtual KeyValuesRoot SerializeToKeyvalues() const;
 
 
         /// Copy the entity. Returns a new object based on this one.

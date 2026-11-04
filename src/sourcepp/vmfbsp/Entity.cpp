@@ -62,3 +62,8 @@ Entity::Entity(const KeyValuesRoot& keyvalues_) :
 Entity::~Entity() {
     this->outputs.clear();
 }
+
+/// TODO: Implement
+Entity::KeyValuesRoot Entity::SerializeToKeyvalues() const {
+    return Entity::KeyValuesRoot();
+}

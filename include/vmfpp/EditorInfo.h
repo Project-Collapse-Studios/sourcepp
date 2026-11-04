@@ -1,8 +1,8 @@
 #pragma once
-#include "VMFBSP.h"
+#include <sourcepp/vmfbsp/VMFBSP.h>
 #include <sourcepp/math/Vec.h>
 
-namespace vmfbsp {
+namespace vmfpp {
     class EditorInfo {
 
     public:
