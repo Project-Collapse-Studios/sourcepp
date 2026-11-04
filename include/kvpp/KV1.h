@@ -227,7 +227,7 @@ public:
 	/// Add a new child element with the given key, with an optional value
 	template<KV1AllowedKeyTypes K, KV1ValueType V = ValueType>
 	KV1Element& addChild(K key_, V value_ = {}) requires RequiresKeyConversion {
-		if constexpr(UsesSTRREF) {
+		if constexpr(UsesSTRREF & std::same_as<V, strref>) {
 			if (!value_.isValid()) { // We can expect key_ is valid, but value_ might be initalized in this function as invalid
 				value_ = this->string_manager->request("");
 			}
