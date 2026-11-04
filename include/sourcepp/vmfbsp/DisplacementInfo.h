@@ -30,4 +30,5 @@ class DisplacementInfo {
         std::vector< size_t > allowed_verts;
 
         explicit DisplacementInfo(const KeyValues& kv);
+        DisplacementInfo() = default;
 };
