@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <sourcepp/String.h>
+#include "EndlessWell.h"
 
 namespace stringpp {
     class string_reference_manager;
@@ -246,6 +247,7 @@ namespace stringpp {
         std::unordered_set<string_reference::str_ref_repr*, str_ref_hash, str_ref_comp> set;
         /// Manager has exclusive ownership of buffer. No operations from outside are allowed.
         std::unique_ptr<std::string> buffer;
+        EndlessWell<string_reference::str_ref_repr> allocator{};
 
         string_reference::str_ref_repr empty_repr;
         bool caseless = false;
@@ -269,11 +271,7 @@ namespace stringpp {
             this->caseless = caseless_;
         }
 
-        ~string_reference_manager() {
-            for (auto el : this->set) {
-                delete el;
-            }
-        }
+        ~string_reference_manager() = default;
 
         /// Request a string reference from us.
         template<StringAlike V>
@@ -287,16 +285,15 @@ namespace stringpp {
                     return string_reference{&this->empty_repr};
                 }
             }
-            auto out = new string_reference::str_ref_repr{};
-            out->start = 0;
-            out->manager = this;
+
+            size_t ref_len = 0;
 
             if constexpr (std::is_array_v<V> || std::same_as<V, const char*>) {
                 for (size_t i = 0; str[i] != '\0'; ++i) {
-                    ++out->len;
+                    ++ref_len;
                 }
             } else {
-                out->len = str.length();
+                ref_len = str.length();
             }
 
             // Our hash and compare set supports all types of V
@@ -306,7 +303,7 @@ namespace stringpp {
             } else {
                 // Is there a better way to do this?
                 std::string A;
-                A.reserve(out->len);
+                A.reserve(ref_len);
                 if constexpr (std::is_array_v<V> || std::same_as<V, const char*>) {
                     for (size_t i = 0; str[i] != '\0'; ++i) {
                         A += std::tolower(str[i]);
@@ -320,20 +317,23 @@ namespace stringpp {
             }
 
             if (it == this->set.end()) {
+                //auto out = new string_reference::str_ref_repr{};
+                auto out = this->allocator.get_element();
+                out->manager = this;
                 out->start = this->buffer->length();
                 this->buffer->append(str); // This should automatically handle conversion to a supported type.
                 this->set.insert(out);
-            } else {
-                // String already exists, delete the previous object and grab the one from the set
-                delete out;
-                out = *it;
+                return string_reference{out};
             }
+            // String already exists, delete the previous object and grab the one from the set
+            //delete out;
+            return string_reference{*it};
 
-            return string_reference{out};
         }
 
         /// Clears unused references from memory.
         /// This is expensive!
+        /// This doesn't actually delete the references themselves!
         void ClearUnusedReferences() {
             for (auto it = this->set.begin(); it != this->set.end(); ++it) {
                 if ((*it)->reference_count == 0) {
