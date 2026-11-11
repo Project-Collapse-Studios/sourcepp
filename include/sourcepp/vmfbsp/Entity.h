@@ -25,14 +25,6 @@ namespace vmfbsp {
         // Constructors and destructors
         Entity() = delete;
 
-        [[nodiscard]] static std::unique_ptr<Entity> CreateByComponents(const std::string& classname_, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f)) {
-            return std::unique_ptr<Entity>(new Entity(classname_, origin_, angles_));
-        }
-
-        [[nodiscard]] static std::unique_ptr<Entity> CreateByKeyvalues(const KeyValues& kv) {
-            return std::unique_ptr<Entity>(new Entity(KeyValuesRoot{kv}));
-        }
-
         virtual ~Entity();
         // Getters
 
@@ -107,10 +99,6 @@ namespace vmfbsp {
         virtual KeyValuesRoot SerializeToKeyvalues() const;
 
 
-        /// Copy the entity. Returns a new object based on this one.
-        [[nodiscard]] std::unique_ptr<Entity> copy() const {
-            return std::unique_ptr<Entity>(new Entity(*this)); // Std::make_unique requires access to the protected copy constructor
-        }
 
     protected:
         KeyValuesRoot keyvalues;
@@ -121,6 +109,8 @@ namespace vmfbsp {
         std::vector<Brush> brushes;
         unsigned int spawnflags;
 
+
+    public:
         // Constructors:
         explicit Entity(const std::string&, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f));
         explicit Entity(const KeyValuesRoot& keyvalues_);
