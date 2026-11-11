@@ -23,6 +23,8 @@
 
 namespace kvpp {
 
+const auto NO_KEY = "NO_KEY";
+
 template <typename T>
 struct is_math_vec : std::false_type {};
 
@@ -490,7 +492,11 @@ protected:
 			// Read key
 			{
 				elements.push_back(KV1Element{});
-				elements.back().key = parser::text::readString(stream, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
+				if (stream.peek<char>() == '{') { // No key defined
+					elements.back().key = NO_KEY;
+				} else {
+					elements.back().key = parser::text::readString(stream, parser::text::DEFAULT_STRING_START, parser::text::DEFAULT_STRING_END, escapeSequences);
+				}
 				parser::text::eatWhitespaceAndSingleLineComments(stream);
 			}
 			// Read value
