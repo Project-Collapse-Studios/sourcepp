@@ -1,19 +1,14 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
 #include <optional>
-#include <span>
 #include <string>
-#include <tuple>
-#include <vector>
-#include <unordered_map>
 
+#include <FileStream.h>
 #include <sourcepp/parser/Binary.h>
 
-#include "EntityLump.h"
-#include "LumpData.h"
-#include "PakLump.h"
+/// LUMP INCLUDES
+#include "lumps/Entity.h"
 
 namespace bsppp {
 
@@ -123,7 +118,7 @@ constexpr std::array<uint32_t, 64> BSP_LUMP_ORDER{
 };
 
 class BSP {
-	struct Lump {
+	struct LumpLocation {
 		/// Byte offset into file
 		uint32_t offset;
 		/// Length of lump data
@@ -134,21 +129,18 @@ class BSP {
 		uint32_t uncompressedLength;
 	};
 
-	struct Header {
-		/// Version of the BSP file
-		uint32_t version;
-		/// Lump metadata
-		std::array<Lump, BSP_LUMP_COUNT> lumps;
-		/// Map version number
-		uint32_t mapRevision;
+public:
+	class lump_doesnt_exist : public std::exception {
+	public:
+		[[nodiscard]] const char * what() const noexcept override {
+			return "Requested lump does not exist!";
+		}
 	};
 
-public:
-	explicit BSP(std::string path_, bool loadPatchFiles = true);
+	explicit BSP(const std::filesystem::path& path, bool loadPatchFiles = true);
 
-	explicit operator bool() const;
+	explicit BSP(uint32_t version_ = 21, uint32_t mapRevision_ = 0, std::endian endianess_ = std::endian::native);
 
-	static BSP create(std::string path, uint32_t version = 21, uint32_t mapRevision = 0);
 
 	[[nodiscard]] uint32_t getVersion() const;
 
@@ -162,115 +154,85 @@ public:
 
 	void setL4D2(bool isL4D2);
 
-	[[nodiscard]] bool isConsole() const;
+	[[nodiscard]] std::endian getEndianess() const;
 
-	void setConsole(bool isConsole);
+	void setEndianess(std::endian endian_);
 
+	/// Returns a boolean depending on if we can retrieve the data of a specific lump.
 	[[nodiscard]] bool hasLump(BSPLump lumpIndex) const;
 
-	[[nodiscard]] bool isLumpCompressed(BSPLump lumpIndex) const;
+	/// In the file reader mode, parse a lump so it's ready for reading.
+	void parseLump(BSPLump lumpIndex);
 
-	[[nodiscard]] uint32_t getLumpVersion(BSPLump lumpIndex) const;
+	//[[nodiscard]] bool isLumpCompressed(BSPLump lumpIndex) const;
 
-	[[nodiscard]] std::optional<std::vector<std::byte>> getLumpData(BSPLump lumpIndex, bool noDecompression = false) const;
+	//[[nodiscard]] uint32_t getLumpVersion(BSPLump lumpIndex) const;
 
-	template<BSPLump Lump>
-	[[nodiscard]] auto getLumpData() const {
-		if constexpr (Lump == BSPLump::ENTITIES) {
-			return this->parseEntities();
-		} else if constexpr (Lump == BSPLump::PLANES) {
-			return this->parsePlanes();
-		} else if constexpr (Lump == BSPLump::TEXDATA) {
-			return this->parseTextureData();
-		} else if constexpr (Lump == BSPLump::VERTEXES) {
-			return this->parseVertices();
-		} else if constexpr (Lump == BSPLump::NODES) {
-			return this->parseNodes();
-		} else if constexpr (Lump == BSPLump::TEXINFO) {
-			return this->parseTextureInfo();
-		} else if constexpr (Lump == BSPLump::FACES) {
-			return this->parseFaces();
-		} else if constexpr (Lump == BSPLump::EDGES) {
-			return this->parseEdges();
-		} else if constexpr (Lump == BSPLump::SURFEDGES) {
-			return this->parseSurfEdges();
-		} else if constexpr (Lump == BSPLump::MODELS) {
-			return this->parseBrushModels();
-		} else if constexpr (Lump == BSPLump::ORIGINALFACES) {
-			return this->parseOriginalFaces();
-		} else if constexpr (Lump == BSPLump::GAME_LUMP) {
-			return this->parseGameLumps(true);
-		} else {
-			return this->getLumpData(Lump);
-		}
-	}
 
-	/// BSP::setGameLump should be used for writing game lumps as they need special handling. Paklump can be
-	/// written here but compression is unsupported, prefer using bsppp::PakLump or your favorite zip library
-	/// instead. Valid compressLevel range is 0 to 9, 0 is considered off, 9 the slowest and most compressiest
-	bool setLump(BSPLump lumpIndex, uint32_t version, std::span<const std::byte> data, uint8_t compressLevel = 0);
+	//[[nodiscard]] bool isGameLumpCompressed(BSPGameLump::Signature signature) const;
 
-	bool setLump(uint32_t version, std::span<const BSPEntityKeyValues> data, uint8_t compressLevel = 0);
+	//[[nodiscard]] uint16_t getGameLumpVersion(BSPGameLump::Signature signature) const;
 
-	[[nodiscard]] bool isGameLumpCompressed(BSPGameLump::Signature signature) const;
+	//[[nodiscard]] std::optional<std::vector<std::byte>> getGameLumpData(BSPGameLump::Signature signature) const;
 
-	[[nodiscard]] uint16_t getGameLumpVersion(BSPGameLump::Signature signature) const;
-
-	[[nodiscard]] std::optional<std::vector<std::byte>> getGameLumpData(BSPGameLump::Signature signature) const;
-
-	bool setGameLump(BSPGameLump::Signature signature, uint16_t version, std::span<const std::byte> data, uint8_t compressLevel = 0);
+	//bool setGameLump(BSPGameLump::Signature signature, uint16_t version, std::span<const std::byte> data, uint8_t compressLevel = 0);
 
 	/// Reset changes made to a lump before they're written to disk
-	void resetLump(BSPLump lumpIndex);
+	//void resetLump(BSPLump lumpIndex);
 
 	/// Resets ALL in-memory modifications (version, all lumps including game lumps, map revision)
-	void reset();
+	//void reset();
 
-	void createLumpPatchFile(BSPLump lumpIndex) const;
+	//void createLumpPatchFile(BSPLump lumpIndex) const;
 
-	bool setLumpFromPatchFile(const std::string& lumpFilePath);
+	//bool setLumpFromPatchFile(const std::string& lumpFilePath);
 
-	bool bake(std::string_view outputPath = "");
+	//bool bake(std::string_view outputPath = "");
+
+
+	/// LUMP GETTER INTERFACE
+	/// Each method should begin with GetLump_X, where X is the lump name.
+
+	/// Get the Entity Lump.
+	[[nodiscard]] auto& GetLump_ENTITIES() {
+		if (!this->hasLump(BSPLump::ENTITIES)) {
+			throw lump_doesnt_exist{};
+		}
+		return lump_entities.value();
+	}
 
 protected:
-	bool readHeader();
 
-	[[nodiscard]] std::vector<BSPEntityKeyValues> parseEntities() const;
+	/// BSP should hold access to the file for the whole duration of the program execution.
+	/// Allowing file modifications during that time could result in various errors, since we're lazily-parsing the lumps.
+	/// Thus this optional is valid when we're doing file based operations. If we've been created from a path to a file then this is valid.
+	/// If we've been created from scratch, this is not initialized.
+	std::optional<FileStream> input_stream;
 
-	[[nodiscard]] std::vector<BSPPlane> parsePlanes() const;
+	/// BSP can be stored as both big-endian (consoles) and little-endian (PCs)
+	std::endian endianess;
+	/// Version of the BSP file
+	uint8_t version;
+	/// Lump metadata
+	std::array<LumpLocation, BSP_LUMP_COUNT> lump_locations;
+	/// Map version number
+	uint32_t mapRevision;
 
-	[[nodiscard]] std::vector<BSPTextureData> parseTextureData() const;
+	/// LUMPS
 
-	[[nodiscard]] std::vector<BSPVertex> parseVertices() const;
+	std::optional<EntityLump> lump_entities;
 
-	[[nodiscard]] std::vector<BSPNode> parseNodes() const;
 
-	[[nodiscard]] std::vector<BSPTextureInfo> parseTextureInfo() const;
+	/// END LUMPS
 
-	[[nodiscard]] std::vector<BSPFace> parseFaces() const;
-
-	[[nodiscard]] std::vector<BSPEdge> parseEdges() const;
-
-	[[nodiscard]] std::vector<BSPSurfEdge> parseSurfEdges() const;
-
-	[[nodiscard]] std::vector<BSPBrushModel> parseBrushModels() const;
-
-	[[nodiscard]] std::vector<BSPFace> parseOriginalFaces() const;
-
-	[[nodiscard]] std::vector<BSPGameLump> parseGameLumps(bool decompress) const;
-
-	std::string path;
-	Header header{};
-
-	uint32_t stagedVersion{};
-	std::unordered_map<uint32_t, std::pair<Lump, std::vector<std::byte>>> stagedLumps;
-	std::vector<BSPGameLump> stagedGameLumps;
-	uint32_t stagedMapRevision{};
+	//uint32_t stagedVersion{};
+	//std::unordered_map<uint32_t, std::pair<LumpLocation, std::vector<std::byte>>> stagedLumps;
+	//std::vector<BSPGameLump> stagedGameLumps;
+	//uint32_t stagedMapRevision{};
 
 	// Slightly different header despite using the same version just to be quirky
 	bool l4d2 = false;
-	// BSP is mostly big-endian
-	bool console = false;
+
 };
 
 } // namespace bsppp
