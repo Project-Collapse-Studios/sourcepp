@@ -1,6 +1,6 @@
 #include <sourcepp/Math/Intersections.h>
 #include <sourcepp/math/Matrix.h>
-
+#include <float.h>
 using namespace mathpp;
 
 bool Intersect(const Plane& plane1, const Plane& plane2, ParametricLine& out) {
