@@ -4,6 +4,7 @@
 #include <sourcepp/math/Vec.h>
 #include <kvpp/KV1.h>
 #include "Output.h"
+#include "Brush.h"
 #include "VMFBSP.h"
 /*
  * This class represents an Point Entity in the source engine.
@@ -112,8 +113,8 @@ namespace vmfbsp {
 
     public:
         // Constructors:
-        explicit Entity(const std::string&, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f));
         explicit Entity(const KeyValuesRoot& keyvalues_);
+        explicit Entity(const std::string&, const mathpp::Vec3f& origin_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f), const mathpp::EulerAngles& angles_ = mathpp::Vec3f(0.0f, 0.0f, 0.0f));
         // TODO:
         // Entity(kv_binary);
         explicit Entity(const Entity& other) :
