@@ -1,5 +1,5 @@
 add_pretty_parser(kvpp
-        DEPS sourcepp_parser
+        DEPS sourcepp_parser cpp_utils
         SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/DMX.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/include/kvpp/KV1.h"

@@ -3,7 +3,7 @@
 #include <concepts>
 #include <string>
 #include <vector>
-#include <sourcepp/StringReference.h>
+#include <string_reference.h>
 
 #include <BufferStream.h>
 #include <sourcepp/parser/Text.h>
@@ -53,12 +53,12 @@ concept KV1ValueConvertible = KV1ValueType<V> && !std::convertible_to<V, std::st
 /// How the underlaying data is stored, this needs to be some sub-type of string.
 template<typename V>
 concept KV1UnderlayingValueType = !std::same_as<V, std::string_view> && (
-								std::same_as<V, stringpp::string_reference> ||
+								std::same_as<V, cutil::string_reference> ||
 								std::same_as<V, std::string>);
 
 template<typename V>
 concept KV1AllowedKeyTypes = !std::same_as<V, std::string_view> && (
-							std::same_as<V, stringpp::string_reference> ||
+							std::same_as<V, cutil::string_reference> ||
 							std::same_as<V, std::string> ||
 							(std::is_array_v<V> && std::same_as<std::remove_extent_t<V>, const char>) ||
 							std::same_as<V, char*> || std::same_as<V, const char*> );
@@ -74,9 +74,9 @@ constexpr bool CompareKeys(const T0& key1, const T1& key2) {
 	}
 }
 
-template<KV1AllowedKeyTypes KeyType = stringpp::string_reference, KV1UnderlayingValueType ValueType = stringpp::string_reference>
+template<KV1AllowedKeyTypes KeyType = cutil::string_reference, KV1UnderlayingValueType ValueType = cutil::string_reference>
 class KV1Element {
-	using strref = stringpp::string_reference;
+	using strref = cutil::string_reference;
 
 public:
 	/// Get the key associated with the element
@@ -96,7 +96,7 @@ public:
 	}
 
 	/// Retrieve the string_reference manager, if we're based on str_refs
-	[[nodiscard]] std::shared_ptr<stringpp::string_reference_manager> getSTRREFManager() const requires UsesSTRREF {
+	[[nodiscard]] std::shared_ptr<cutil::string_reference_manager> getSTRREFManager() const requires UsesSTRREF {
 		return this->string_manager;
 	}
 
@@ -180,7 +180,7 @@ public:
 	}
 
 	/// Get n values (of the same type) from multiple children of the same key.
-	template<KV1ValueType V, bool robust_parsing = false, KV1AllowedKeyTypes K = stringpp::string_reference>
+	template<KV1ValueType V, bool robust_parsing = false, KV1AllowedKeyTypes K = cutil::string_reference>
 	std::vector<V> getChildrenValues(K& childKey, uint32_t n = -1) const requires RequiresKeyComparison { // n = -1 will cause it to actually be the max value
 		std::vector<V> result;
 		auto child_count = this->getChildCount(childKey);
@@ -433,7 +433,7 @@ public:
 
 protected:
 	KV1Element() = default;
-	explicit KV1Element(std::shared_ptr<stringpp::string_reference_manager> mgr)
+	explicit KV1Element(std::shared_ptr<cutil::string_reference_manager> mgr)
 	requires std::same_as<KeyType, strref> || std::same_as<ValueType, strref>
 	: string_manager(mgr) {
 		// Make sure we set the manager
@@ -451,7 +451,7 @@ public:
 	/// 1. Pass an already made manager
 	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<stringpp::string_reference_manager> mgr = {}) {
+	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = {}) {
 		if constexpr (UsesSTRREF) {
 			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
 				this->string_manager = other.getSTRREFManager();
@@ -461,7 +461,7 @@ public:
 					this->string_manager = mgr;
 				} else {
 					// Create a new one
-					this->string_manager = std::make_unique<stringpp::string_reference_manager>(true);
+					this->string_manager = std::make_unique<cutil::string_reference_manager>(true);
 				}
 			}
 
@@ -522,7 +522,7 @@ protected:
 		}
 	}
 
-	static void read(std::shared_ptr<stringpp::string_reference_manager> mgr, BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
+	static void read(std::shared_ptr<cutil::string_reference_manager> mgr, BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
 		(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>) { // Used when we use strref
 		using namespace sourcepp;
 		while (true) {
@@ -606,7 +606,7 @@ protected:
 
 	struct empty {};
 	using needs_strref_mgr = std::conditional_t<std::is_same_v<KeyType, strref> || std::is_same_v<ValueType, strref>,
-	std::shared_ptr<stringpp::string_reference_manager>, empty>;
+	std::shared_ptr<cutil::string_reference_manager>, empty>;
 #if defined(_MSC_VER) // Seriously????
 	[[msvc::no_unique_address]] needs_strref_mgr string_manager;
 #else
@@ -616,11 +616,11 @@ protected:
 
 /// Class representing a KeyValue 1 tree object.
 /// You can use different (string-based) types for Keys and Values
-template<KV1AllowedKeyTypes KeyType = stringpp::string_reference, KV1UnderlayingValueType ValueType = stringpp::string_reference>
-requires (!((std::same_as<KeyType, std::string_view> && std::same_as<ValueType, stringpp::string_reference>) ||
-	(std::same_as<KeyType, stringpp::string_reference> && std::same_as<ValueType, std::string_view>)))
+template<KV1AllowedKeyTypes KeyType = cutil::string_reference, KV1UnderlayingValueType ValueType = cutil::string_reference>
+requires (!((std::same_as<KeyType, std::string_view> && std::same_as<ValueType, cutil::string_reference>) ||
+	(std::same_as<KeyType, cutil::string_reference> && std::same_as<ValueType, std::string_view>)))
 class KV1 : public KV1Element<KeyType, ValueType> {
-	using strref = stringpp::string_reference;
+	using strref = cutil::string_reference;
 public:
 	/// Constructor used for text based keyvalues
 	/// This should be used for KV1s that use deepcopy-based strings, such as std::string
@@ -644,7 +644,7 @@ public:
 
 	/// Used to construct KV1 from data, if we specified that we're gonna use String Reference.
 	/// You will need to create the manager yourself!
-	explicit KV1(std::shared_ptr<stringpp::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
+	explicit KV1(std::shared_ptr<cutil::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
 	requires UsesSTRREF:
 			KV1Element<KeyType, ValueType>(mgr) {
 		this->string_manager = mgr;
@@ -676,7 +676,7 @@ public:
 	/// 1. Pass an already made manager
 	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1(const KV1<K, V>& other, std::shared_ptr<stringpp::string_reference_manager> mgr = {}) {
+	KV1(const KV1<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = {}) {
 		if constexpr (UsesSTRREF) {
 			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
 				this->string_manager = other.getSTRREFManager();
@@ -686,7 +686,7 @@ public:
 					this->string_manager = mgr;
 				} else {
 					// Create a new one
-					this->string_manager = std::make_unique<stringpp::string_reference_manager>(true);
+					this->string_manager = std::make_unique<cutil::string_reference_manager>(true);
 				}
 			}
 
