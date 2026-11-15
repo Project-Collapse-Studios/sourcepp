@@ -16,6 +16,6 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_HEADERS})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC bufferstream sourcepp_half)
+target_link_libraries(${PROJECT_NAME} PUBLIC bufferstream sourcepp_half cpp_utils)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

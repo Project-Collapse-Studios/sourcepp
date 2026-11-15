@@ -26,7 +26,7 @@ endif()
 add_sourcepp_remote_library(bufferstream https://github.com/craftablescience/BufferStream 5c040a17417a3cef650f49c41192b2c00ac1e865)
 
 # cpp_utils
-add_sourcepp_remote_library(cpp_utils https://github.com/Project-Collapse-Studios/cpp_utils aaf90d9bea79c8013392f1880dc811471fe51566)
+add_sourcepp_remote_library(cpp_utils https://github.com/Project-Collapse-Studios/cpp_utils 6005d5b4c09eb0e6c84841b84ee7a9badb500190)
 
 # compressonator
 if(SOURCEPP_USE_VTFPP AND SOURCEPP_VTFPP_BUILD_WITH_COMPRESSONATOR)
