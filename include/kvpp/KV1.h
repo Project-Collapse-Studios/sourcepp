@@ -25,6 +25,10 @@ namespace kvpp {
 
 const auto NO_KEY = "NO_KEY";
 
+/// This is the global default manager used for KV1 if we specify to use strref.
+/// The user can pass their own.
+inline std::shared_ptr KV_STRREF_MGR = std::make_unique<cutil::string_reference_manager>(true);
+
 template <typename T>
 struct is_math_vec : std::false_type {};
 
@@ -433,7 +437,7 @@ public:
 
 protected:
 	KV1Element() = default;
-	explicit KV1Element(std::shared_ptr<cutil::string_reference_manager> mgr)
+	explicit KV1Element(std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR)
 	requires std::same_as<KeyType, strref> || std::same_as<ValueType, strref>
 	: string_manager(mgr) {
 		// Make sure we set the manager
@@ -451,7 +455,7 @@ public:
 	/// 1. Pass an already made manager
 	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = {}) {
+	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
 		if constexpr (UsesSTRREF) {
 			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
 				this->string_manager = other.getSTRREFManager();
@@ -479,8 +483,7 @@ public:
 	}
 protected:
 
-	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
-			(!(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>)) { // Cannot use this when we are using a strref to hold any data
+	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires (!UsesSTRREF) { // Cannot use this when we are using a strref to hold any data
 		using namespace sourcepp;
 		while (true) {
 			// Check if the block is over
@@ -522,8 +525,7 @@ protected:
 		}
 	}
 
-	static void read(std::shared_ptr<cutil::string_reference_manager> mgr, BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires
-		(std::same_as<KeyType, strref> || std::same_as<ValueType, strref>) { // Used when we use strref
+	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) requires UsesSTRREF { // Used when we use strref
 		using namespace sourcepp;
 		while (true) {
 			// Check if the block is over
@@ -553,7 +555,7 @@ protected:
 				stream.skip();
 				parser::text::eatWhitespaceAndSingleLineComments(stream);
 				if (stream.peek<char>() != '}') {
-					KV1Element::read(mgr, stream, elements.back().children, escapeSequences);
+					KV1Element::read(stream, elements.back().children, escapeSequences, mgr);
 				} else {
 					stream.skip();
 				}
@@ -605,8 +607,7 @@ protected:
 
 
 	struct empty {};
-	using needs_strref_mgr = std::conditional_t<std::is_same_v<KeyType, strref> || std::is_same_v<ValueType, strref>,
-	std::shared_ptr<cutil::string_reference_manager>, empty>;
+	using needs_strref_mgr = std::conditional_t<UsesSTRREF, std::shared_ptr<cutil::string_reference_manager>, empty>;
 #if defined(_MSC_VER) // Seriously????
 	[[msvc::no_unique_address]] needs_strref_mgr string_manager;
 #else
@@ -644,7 +645,7 @@ public:
 
 	/// Used to construct KV1 from data, if we specified that we're gonna use String Reference.
 	/// You will need to create the manager yourself!
-	explicit KV1(std::shared_ptr<cutil::string_reference_manager> mgr, std::string_view kv1Data = "", const bool useEscapeSequences = false)
+	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR)
 	requires UsesSTRREF:
 			KV1Element<KeyType, ValueType>(mgr) {
 		this->string_manager = mgr;
@@ -657,7 +658,7 @@ public:
 		}
 		BufferStreamReadOnly stream{kv1Data};
 		try {
-			KV1Element<KeyType, ValueType>::read(mgr, stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
+			KV1Element<KeyType, ValueType>::read(stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences), mgr);
 		} catch (const std::overflow_error&) {}
 	}
 
@@ -676,19 +677,14 @@ public:
 	/// 1. Pass an already made manager
 	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
-	KV1(const KV1<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = {}) {
+	KV1(const KV1<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
 		if constexpr (UsesSTRREF) {
 			if constexpr (std::same_as<K, strref> || std::same_as<V, strref>) {
 				this->string_manager = other.getSTRREFManager();
-			} else {
-				if (mgr != nullptr) {
-					// Adopt
-					this->string_manager = mgr;
-				} else {
-					// Create a new one
-					this->string_manager = std::make_unique<cutil::string_reference_manager>(true);
-				}
+			}  else {
+				this->string_manager = mgr;
 			}
+
 
 			this->key = this->string_manager->request(other.getKey());
 			this->value = this->string_manager->request(other.getValue());
