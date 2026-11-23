@@ -436,24 +436,24 @@ public:
 	//}
 
 protected:
-	KV1Element() = default;
-	explicit KV1Element(std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR)
-	requires std::same_as<KeyType, strref> || std::same_as<ValueType, strref>
-	: string_manager(mgr) {
-		// Make sure we set the manager
-		if constexpr (std::same_as<KeyType, strref>) {
-			this->key = mgr->request("");
-		}
-		if constexpr (std::same_as<ValueType, strref>) {
-			this->value = mgr->request("");
+	//KV1Element() = default;
+	explicit KV1Element(std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
+		if constexpr (UsesSTRREF) {
+			this->string_manager = mgr;
+
+			if constexpr (std::same_as<KeyType, strref>) {
+				this->key = mgr->request("");
+			}
+			if constexpr (std::same_as<ValueType, strref>) {
+				this->value = mgr->request("");
+			}
 		}
 	}
 
 public:
-	/// Transfer between template specializations
-	/// If you're transfering from a type that doesn't use strrefs, but this type uses strrefs, you can:
-	/// 1. Pass an already made manager
-	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
+	/// Transfer by template specializations
+	/// @param other The KV1Element we're copying data from
+	/// @param mgr The string reference manager that we're going to reference. If not specified - global KV1 manager. Only used if (this) specialization uses string reference.
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
 	KV1Element(const KV1Element<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
 		if constexpr (UsesSTRREF) {
@@ -482,7 +482,7 @@ public:
 		}
 	}
 protected:
-
+	/*
 	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences) requires (!UsesSTRREF) { // Cannot use this when we are using a strref to hold any data
 		using namespace sourcepp;
 		while (true) {
@@ -524,8 +524,9 @@ protected:
 			}
 		}
 	}
+	*/
 
-	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) requires UsesSTRREF { // Used when we use strref
+	static void read(BufferStreamReadOnly& stream, std::vector<KV1Element>& elements, const sourcepp::parser::text::EscapeSequenceMap& escapeSequences, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
 		using namespace sourcepp;
 		while (true) {
 			// Check if the block is over
@@ -623,32 +624,20 @@ requires (!((std::same_as<KeyType, std::string_view> && std::same_as<ValueType, 
 class KV1 : public KV1Element<KeyType, ValueType> {
 	using strref = cutil::string_reference;
 public:
-	/// Constructor used for text based keyvalues
-	/// This should be used for KV1s that use deepcopy-based strings, such as std::string
-	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false)
-	requires (std::is_convertible_v<KeyType, std::string> && std::is_convertible_v<ValueType, std::string> // Requires the values to be able to be represented as strings
-			&& !UsesSTRREF  // But not any string_reference
-			):
-			KV1Element<KeyType, ValueType>() {
-		// Skip the UTF-8 BOM
-		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
-			kv1Data.remove_prefix(3);
-		}
-		if (kv1Data.empty()) {
-			return;
-		}
-		BufferStreamReadOnly stream{kv1Data};
-		try {
-			KV1Element<KeyType, ValueType>::read(stream, this->children, sourcepp::parser::text::getDefaultEscapeSequencesOrNone(useEscapeSequences));
-		} catch (const std::overflow_error&) {}
-	}
 
-	/// Used to construct KV1 from data, if we specified that we're gonna use String Reference.
-	/// You will need to create the manager yourself!
-	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR)
-	requires UsesSTRREF:
+	/// Create a KeyValues1 object.
+	/// @param kv1Data The raw data in a form of a string, to parse
+	/// @param useEscapeSequences TODO: Document?
+	/// @param mgr The string_reference manager to use. This is only used when the templated KV1 type uses a string_reference for key, value or both.
+	/// If not specified and KV uses string_reference, this gets bound to the global manager (holding data of every KV1 object)
+	explicit KV1(std::string_view kv1Data = "", const bool useEscapeSequences = false, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR):
 			KV1Element<KeyType, ValueType>(mgr) {
-		this->string_manager = mgr;
+
+		if constexpr (UsesSTRREF) {
+			this->string_manager = mgr;
+		}
+
+
 		// Skip the UTF-8 BOM
 		if (kv1Data.starts_with("\xEF\xBB\xBF")) {
 			kv1Data.remove_prefix(3);
@@ -672,10 +661,9 @@ public:
 		}
 	}
 
-	/// Transfer between template specializations
-	/// If you're transfering from a type that doesn't use strrefs, but this type uses strrefs, you can:
-	/// 1. Pass an already made manager
-	/// 2. Not pass it, and a new one will be created (you can always retrieve it with a method).
+	/// Transfer by template specializations
+	/// @param other The KV1 we're copying data from
+	/// @param mgr The string reference manager that we're going to reference. If not specified - global KV1 manager. Only used if (this) specialization uses string reference.
 	template<KV1AllowedKeyTypes K, KV1UnderlayingValueType V>
 	KV1(const KV1<K, V>& other, std::shared_ptr<cutil::string_reference_manager> mgr = KV_STRREF_MGR) {
 		if constexpr (UsesSTRREF) {
