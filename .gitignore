@@ -4,6 +4,8 @@
 .vscode/
 CMakeSettings.json
 
+# Development folder
+dev/
 
 # Build
 build/

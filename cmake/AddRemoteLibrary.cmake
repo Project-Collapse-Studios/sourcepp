@@ -13,6 +13,13 @@ function(add_sourcepp_remote_library NAME REPOSITORY TAG)
     if(NOT TARGET NAME)
         message(STATUS "Fetching ${NAME} ${REPOSITORY} ${TAG}")
         string(REPLACE ":" "_" NAME_CLEAN "${NAME}")
+
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dev/${NAME}") # If we have a local cloned copy, use that
+            message(STATUS "Found local copy at ${CMAKE_CURRENT_SOURCE_DIR}/dev/${NAME}")
+            add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/dev/${NAME}")
+            return(PROPAGATE "${NAME_CLEAN}_POPULATED" "${NAME_CLEAN}_SOURCE_DIR" "${NAME_CLEAN}_BINARY_DIR")
+        endif()
+
         set(FETCHCONTENT_DECLARE_ARGUMENTS "${NAME_CLEAN}" "GIT_REPOSITORY" "${REPOSITORY}.git" "GIT_TAG" "${TAG}")
         if(OPTIONS_DO_NOT_USE_CMAKELISTS)
             list(APPEND FETCHCONTENT_DECLARE_ARGUMENTS "SOURCE_SUBDIR" "THIS_DIRECTORY_DOES_NOT_EXIST")
